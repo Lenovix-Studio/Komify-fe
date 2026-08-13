@@ -14,6 +14,8 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 
 type Comic = {
   id: string;
@@ -286,6 +288,12 @@ export default function HomePage() {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearch("");
+    setPage(1);
+  };
+
   /* ================= PAGINATION ================= */
   const visiblePages = useMemo(() => {
     const total = pagination.total_pages;
@@ -308,94 +316,48 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-337.5 items-center justify-between px-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-3 hover:opacity-80 transition"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500">
-              <BookOpenText className="h-5 w-5 text-white" />
-            </div>
-
-            <span className="text-lg font-bold tracking-tight">Komify</span>
-          </Link>
-
-          {/* Search + Random */}
-          <div className="hidden items-center gap-2 md:flex">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-
-              <input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search comics..."
-                className="w-100 rounded-xl border border-zinc-800 bg-zinc-900 py-2 pl-10 pr-10 text-sm outline-none transition focus:border-indigo-500"
-              />
-
-              {searchInput && (
-                <button
-                  onClick={() => {
-                    setSearchInput("");
-                    setSearch("");
-                    setPage(1);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
-                  title="Clear search"
-                  type="button"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={handleRandomComic}
-              className="
-                flex items-center gap-2
-                rounded-xl border border-indigo-500/20
-                bg-indigo-500/10
-                px-4 py-2
-                text-sm font-medium text-indigo-300
-                transition
-                hover:bg-indigo-500/20
-                hover:text-white
-              "
+      <Header
+        searchValue={searchInput}
+        onSearchChange={(val) => setSearchInput(val)}
+        onSearchClear={handleClearSearch}
+        onRandomClick={handleRandomComic}
+        rightContent={
+          <>
+            <Button
+              variant="ghost"
+              asChild
+              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
             >
-              <Dices className="h-4 w-4" />
-              <span>Random</span>
-            </button>
-          </div>
+              <Link href="/bookmark">
+                <Bookmark className="h-4 w-4" />
+                <span className="hidden md:inline">Bookmark</span>
+              </Link>
+            </Button>
 
-          {/* Navigation */}
-          <nav className="hidden items-center gap-2 md:flex">
-            <Link
-              href="/bookmark"
-              className="group flex items-center gap-2 rounded-2xl px-4 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            <Button
+              variant="ghost"
+              asChild
+              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
             >
-              <Bookmark className="h-4 w-4 transition group-hover:scale-110" />
-              <span>Bookmark</span>
-            </Link>
+              <Link href="/upload">
+                <Upload className="h-4 w-4" />
+                <span className="hidden md:inline">Upload</span>
+              </Link>
+            </Button>
 
-            <Link
-              href="/upload"
-              className="group flex items-center gap-2 rounded-2xl px-4 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+            <Button
+              variant="ghost"
+              asChild
+              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
             >
-              <Upload className="h-4 w-4 transition group-hover:scale-110" />
-              <span>Upload</span>
-            </Link>
-
-            <Link
-              href="/settings"
-              className="group flex items-center gap-2 rounded-2xl px-4 py-2 text-sm text-zinc-400 transition hover:bg-indigo-500/10 hover:text-indigo-300"
-            >
-              <Settings className="h-4 w-4 transition group-hover:scale-110" />
-              <span>Settings</span>
-            </Link>
-          </nav>
-        </div>
-      </header>
+              <Link href="/settings">
+                <Settings className="h-4 w-4" />
+                <span className="hidden md:inline">Settings</span>
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Latest Updates */}
       <section className="mx-auto max-w-337.5 px-4 py-10">

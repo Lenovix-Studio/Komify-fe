@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
@@ -17,7 +17,17 @@ export const metadata: Metadata = {
     default: "Komify",
     template: "%s | Komify",
   },
-  description: "Personal Webcomic Library",
+  description: "Personal Webcomic Library & Reader Platform",
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111318" },
+  ],
 };
 
 export default function RootLayout({
@@ -27,10 +37,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      lang="id"
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full suppressHydrationWarning`}
     >
-      <body className="min-h-screen bg-zinc-950 text-zinc-100">{children}</body>
+      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
+        {children}
+      </body>
     </html>
   );
 }

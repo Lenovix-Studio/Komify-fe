@@ -13,6 +13,7 @@ import {
   Trash2,
   RotateCw,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import Cropper from "react-easy-crop";
 import {
@@ -34,6 +35,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getCroppedImg } from "@/lib/cropImage";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 
 type Status = {
   id: string;
@@ -614,55 +617,68 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Top Bar (Back Only) */}
-      <div className="flex flex-col gap-4 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left - Back Button + Sleek Comic ID Badge */}
-        <div className="flex items-center gap-2.5">
-          {/* Tombol Back Sederhana & Ergonomis */}
-          <Link
-            href="/"
-            className="group flex items-center gap-1.5 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3.5 py-1.5 text-xs font-medium text-zinc-400 transition duration-200 hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-200 shadow-sm"
+      <Header
+        logo={false}
+        showSearch={false}
+        showRandom={false}
+        leftContent={
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition duration-200 group-hover:-translate-x-0.5" />
-            Back
-          </Link>
-        </div>
-
-        {/* Center - Template Selector */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/40 p-1">
-          {[
-            { key: "doujinshi", label: "Doujinshi" },
-            { key: "manga", label: "Manga" },
-            { key: "manhwa", label: "Manhwa" },
-          ].map((item) => {
-            const isActive = activeTemplate === item.key;
-
-            return (
-              <button
-                key={item.key}
-                onClick={() => setActiveTemplate(item.key)}
-                className={`rounded-lg px-4 py-1.5 text-xs font-medium transition duration-200 ${
-                  isActive
-                    ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/10"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right - Publish Comic Button */}
-        <button
-          onClick={handlePublish}
-          disabled={isPublishing}
-          className="group flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-2 text-xs font-semibold text-white transition duration-200 hover:bg-indigo-400 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30"
-        >
-          <Upload className="h-3.5 w-3.5 transition duration-200 group-hover:-translate-y-0.5" />
-          Publish Comic
-        </button>
-      </div>
+            <Link href="/">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Back</span>
+            </Link>
+          </Button>
+        }
+        centerContent={
+          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted/40 p-1">
+            {[
+              { key: "doujinshi", label: "Doujinshi" },
+              { key: "manga", label: "Manga" },
+              { key: "manhwa", label: "Manhwa" },
+            ].map((item) => {
+              const isActive = activeTemplate === item.key;
+              return (
+                <Button
+                  key={item.key}
+                  type="button"
+                  variant={isActive ? "default" : "ghost"}
+                  size="xs"
+                  onClick={() => setActiveTemplate(item.key)}
+                  className={`rounded-lg px-3 text-xs transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </Button>
+              );
+            })}
+          </div>
+        }
+        rightContent={
+          <Button
+            type="button"
+            variant="glow"
+            size="sm"
+            onClick={handlePublish}
+            disabled={isPublishing}
+            className="gap-2 rounded-xl"
+          >
+            {isPublishing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            <span>{isPublishing ? "Publishing..." : "Publish Comic"}</span>
+          </Button>
+        }
+      />
 
       {/* Content */}
       <main className="mx-auto grid max-w-500 grid-cols-1 gap-6 px-6 pb-10 lg:grid-cols-[1fr_2fr_2fr]">
