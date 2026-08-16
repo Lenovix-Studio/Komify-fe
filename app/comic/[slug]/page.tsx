@@ -34,6 +34,7 @@ import {
   ArrowUpDown,
   Search,
   Dices,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
@@ -161,6 +162,7 @@ export default function ComicDetailPage() {
   const [isOrderingMode, setIsOrderingMode] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [isRandomLoading, setIsRandomLoading] = useState(false);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -308,7 +310,8 @@ export default function ComicDetailPage() {
 
   const [deletingComic, setDeletingComic] = useState(false);
   const handleDeleteComic = async () => {
-    if (!comic) return;
+    if (!comic?.id) return;
+
     const confirmed = window.confirm(
       `Delete comic "${comic.title}"?\n\nThis will permanently delete:\n- Comic metadata\n- All chapters\n- All pages\n- All images`,
     );
@@ -366,19 +369,29 @@ export default function ComicDetailPage() {
   } as const;
 
   const handleRandomComic = async () => {
+    if (isRandomLoading) return;
+
+    setIsRandomLoading(true);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/comics/random`,
       );
       if (!response.ok) {
-        throw new Error("Failed");
+        throw new Error("Failed to fetch random comic");
       }
 
-      const comic = await response.json();
-      router.push(`/comic/${comic.seo_slug ?? comic.id}`);
+      const comicData = await response.json();
+      const targetSlug = comicData?.seo_slug ?? comicData?.id;
+      if (targetSlug) {
+        router.push(`/comic/${targetSlug}`);
+      } else {
+        console.warn("Random comic returned empty payload:", comicData);
+      }
     } catch (error) {
       console.error(error);
       alert("Failed to load random comic");
+    } finally {
+      setIsRandomLoading(false);
     }
   };
 
@@ -425,9 +438,14 @@ export default function ComicDetailPage() {
               title="Random Comic"
               variant="outline"
               onClick={handleRandomComic}
-              className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0"
+              disabled={isRandomLoading}
+              className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0 disabled:opacity-50"
             >
-              <Dices className="h-4 w-4" />
+              {isRandomLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Dices className="h-4 w-4" />
+              )}
             </Button>
           }
           rightContent={
@@ -439,7 +457,7 @@ export default function ComicDetailPage() {
                 asChild
                 className="gap-2 rounded-xl border-border/60 bg-muted/50 text-foreground hover:bg-muted"
               >
-                <Link href={`/comic/${comic.id}/edit`}>
+                <Link href={comic?.id ? `/comic/${comic.id}/edit` : "#"}>
                   <Pencil className="h-4 w-4" />
                   <span className="hidden sm:inline">Edit Comic</span>
                 </Link>
@@ -494,14 +512,23 @@ export default function ComicDetailPage() {
 
               {/* Actions */}
               <div className="mt-5 space-y-3">
-                <Link
-                  href={`/comic/${comic.id}/chapter/${chapters[0].id}`}
-                  className="group flex w-full items-center justify-center gap-2 rounded-3xl bg-indigo-500 px-5 py-4 text-sm font-bold text-white shadow-xl shadow-indigo-500/20 transition hover:scale-[1.02] hover:bg-indigo-400"
-                >
-                  <BookOpen className="h-4 w-4 transition group-hover:scale-110" />
-
-                  <span>Read First Chapter</span>
-                </Link>
+                {chapters && chapters.length > 0 && comic?.id ? (
+                  <Link
+                    href={`/comic/${comic.id}/chapter/${chapters[0].id}`}
+                    className="group flex w-full items-center justify-center gap-2 rounded-3xl bg-indigo-500 px-5 py-4 text-sm font-bold text-white shadow-xl shadow-indigo-500/20 transition hover:scale-[1.02] hover:bg-indigo-400"
+                  >
+                    <BookOpen className="h-4 w-4 transition group-hover:scale-110" />
+                    <span>Read First Chapter</span>
+                  </Link>
+                ) : (
+                  <Button
+                    disabled
+                    className="flex w-full items-center justify-center gap-2 rounded-3xl bg-muted px-5 py-4 text-sm font-bold text-muted-foreground"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>No Chapters Available</span>
+                  </Button>
+                )}
 
                 <button
                   onClick={handleBookmark}
@@ -734,14 +761,16 @@ export default function ComicDetailPage() {
               </p>
             </div>
 
-            {/* Add Chapter (Sekarang sejajar dengan judul, menghemat ruang) */}
-            <Link
-              href={`/comic/${comic.id}/chapter/create`}
-              className="group flex h-11 items-center gap-2 rounded-2xl bg-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/10 transition-all duration-200 hover:bg-indigo-400 hover:shadow-indigo-500/20 active:scale-95"
-            >
-              <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-              <span>Add Chapter</span>
-            </Link>
+            {/* Add Chapter */}
+            {comic?.id && (
+              <Link
+                href={`/comic/${comic.id}/chapter/create`}
+                className="group flex h-11 items-center gap-2 rounded-2xl bg-indigo-500 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/10 transition-all duration-200 hover:bg-indigo-400 hover:shadow-indigo-500/20 active:scale-95"
+              >
+                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                <span>Add Chapter</span>
+              </Link>
+            )}
           </div>
 
           {/* Right: Controls Panel */}
@@ -817,7 +846,7 @@ export default function ComicDetailPage() {
                   <SortableChapterCard
                     key={chapter.id}
                     chapter={chapter}
-                    comicId={comic.id}
+                    comicId={comic?.id ?? ""}
                     isOrderingMode={isOrderingMode}
                     setSelectedChapter={setSelectedChapter}
                   />
