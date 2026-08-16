@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpenText, Search, X, Dices } from "lucide-react";
+import { BookOpenText, Search, X, Dices, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -11,6 +11,7 @@ export interface HeaderProps {
   onSearchChange?: (value: string) => void;
   onSearchClear?: () => void;
   onRandomClick?: () => void;
+  isRandomLoading?: boolean;
   logo?: boolean;
   showSearch?: boolean;
   showRandom?: boolean;
@@ -24,6 +25,7 @@ export function Header({
   onSearchChange,
   onSearchClear,
   onRandomClick,
+  isRandomLoading = false,
   logo = true,
   showSearch = true,
   showRandom = true,
@@ -83,9 +85,14 @@ export function Header({
                   title="Random Comic"
                   variant="outline"
                   onClick={onRandomClick}
-                  className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0 hidden md:flex"
+                  disabled={isRandomLoading}
+                  className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0 hidden md:flex disabled:opacity-50"
                 >
-                  <Dices className="h-4 w-4" />
+                  {isRandomLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Dices className="h-4 w-4" />
+                  )}
                 </Button>
               )}
               {showSearch && (

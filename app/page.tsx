@@ -70,6 +70,7 @@ export default function HomePage() {
   const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
+  const [isRandomLoading, setIsRandomLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -190,6 +191,9 @@ export default function HomePage() {
   ]);
 
   const handleRandomComic = async () => {
+    if (isRandomLoading) return;
+
+    setIsRandomLoading(true);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/comics/random`,
@@ -199,10 +203,17 @@ export default function HomePage() {
       }
 
       const comic = await response.json();
-      router.push(`/comic/${comic.seo_slug ?? comic.id}`);
+      const targetSlug = comic?.seo_slug ?? comic?.id;
+      if (targetSlug) {
+        router.push(`/comic/${targetSlug}`);
+      } else {
+        console.warn("Random comic returned empty payload:", comic);
+      }
     } catch (error) {
       console.error(error);
       alert("Failed to load random comic");
+    } finally {
+      setIsRandomLoading(false);
     }
   };
 
@@ -219,6 +230,7 @@ export default function HomePage() {
         onSearchChange={(val) => setSearchInput(val)}
         onSearchClear={handleClearSearch}
         onRandomClick={handleRandomComic}
+        isRandomLoading={isRandomLoading}
         rightContent={
           <>
             <Button
