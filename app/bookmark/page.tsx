@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Bookmark, Clock3, Trash2 } from "lucide-react";
+import { ArrowLeft, Bookmark, Clock3, Search, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Header } from "@/components/header";
 
 type BookmarkComic = {
   id: string;
@@ -104,67 +107,58 @@ export default function BookmarkPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
-          {/* Left */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="group flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 transition hover:border-indigo-500 hover:bg-indigo-500/10 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+      <Header
+        logo={false}
+        showSearch={false}
+        showRandom={false}
+        leftContent={
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
+          >
+            <Link href="/">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Back</span>
             </Link>
-
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Komify
-              </p>
-              <h1 className="text-sm font-semibold text-white">Bookmark</h1>
-            </div>
-          </div>
-
-          {/* Center Controls */}
-          <div className="hidden items-center gap-3 md:flex">
-            {/* Search */}
-            <div className="relative">
-              <input
+          </Button>
+        }
+        centerContent={
+          <div className="hidden items-center gap-2 md:flex w-full">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search bookmarks..."
-                className="w-64 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-2 pl-10 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
+                className="pl-9 pr-8 h-10 rounded-xl bg-muted/50 border-border/60 focus-visible:bg-background transition-all text-sm"
               />
-
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
-                🔍
-              </div>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-
-            {/* Type Filter */}
-            <select className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 outline-none transition focus:border-indigo-500">
-              <option value="all">All Types</option>
-              <option value="manga">Manga</option>
-              <option value="manhwa">Manhwa</option>
-            </select>
-
-            {/* Sort */}
-            <select className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 outline-none transition focus:border-indigo-500">
-              <option value="last_added">Last Added</option>
-              <option value="old_added">Oldest Added</option>
-            </select>
           </div>
-
-          {/* Right */}
-          <button
+        }
+        rightContent={
+          <Button
+            variant="destructive"
+            size="sm"
             onClick={clearAllBookmarks}
-            className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/20"
+            className="gap-2 rounded-xl"
           >
             <Trash2 className="h-4 w-4" />
-            Clear All
-          </button>
-        </div>
-      </header>
+            <span>Clear All</span>
+          </Button>
+        }
+      />
 
       {/* Content */}
       <main className="mx-auto max-w-7xl px-6 py-5">
