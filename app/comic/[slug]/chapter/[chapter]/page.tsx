@@ -13,6 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { Loading } from "@/components/loading";
 
 type ChapterPage = {
   id: string;
@@ -140,9 +141,9 @@ export default function ChapterReaderPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-zinc-400">
-        Loading chapter...
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <Loading text="Loading chapter..." />
+      </main>
     );
   }
 

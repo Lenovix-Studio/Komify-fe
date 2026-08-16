@@ -35,6 +35,9 @@ import {
   Search,
   Dices,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Header } from "@/components/header";
+import { Loading } from "@/components/loading";
 
 type ComicMetadata = {
   id: string;
@@ -381,8 +384,8 @@ export default function ComicDetailPage() {
 
   if (loadingComic || !comic) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="text-sm text-zinc-500">Loading comic...</div>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <Loading text="Loading comic..." />
       </main>
     );
   }
@@ -401,78 +404,63 @@ export default function ComicDetailPage() {
         <div className="absolute inset-0 bg-linear-to-b from-black/30 via-zinc-950/60 to-zinc-950" />
 
         {/* Header */}
-        <header className="sticky top-0 z-50">
-          <div className="flex h-18 items-center justify-between px-6">
-            <div className="flex items-center justify-between gap-4">
-              {/* Left */}
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/"
-                  className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 transition hover:border-indigo-500 hover:bg-indigo-500/10 hover:text-white"
-                >
-                  <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
-                </Link>
-
-                <div className="leading-tight">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
-                    Komify
-                  </p>
-                  <p className="text-sm font-semibold text-white">
-                    Back to Library
-                  </p>
-                </div>
-              </div>
-
-              {/* Right */}
-              <button
-                onClick={handleRandomComic}
-                className="
-                  flex items-center gap-2
-                  rounded-xl border border-indigo-500/20
-                  bg-indigo-500/10
-                  px-4 py-2
-                  text-sm font-medium text-indigo-300
-                  transition
-                  hover:bg-indigo-500/20
-                  hover:text-white
-                "
-              >
-                <Dices className="h-4 w-4" />
-                <span>Random</span>
-              </button>
-            </div>
-
-            {/* Right */}
-            <nav className="hidden items-center gap-2 lg:flex">
-              {/* Edit */}
-              <Link
-                href={`/comic/${comic.id}/edit`}
-                className="group flex items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-300 transition hover:border-amber-500 hover:bg-amber-500/10 hover:text-white"
-              >
-                <Pencil className="h-4 w-4 transition group-hover:scale-110" />
-                <span>Edit Comic</span>
+        <Header
+          logo={false}
+          showSearch={false}
+          leftContent={
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
+            >
+              <Link href="/">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Back</span>
               </Link>
+            </Button>
+          }
+          centerContent={
+            <Button
+              title="Random Comic"
+              variant="outline"
+              onClick={handleRandomComic}
+              className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0"
+            >
+              <Dices className="h-4 w-4" />
+            </Button>
+          }
+          rightContent={
+            <div className="flex items-center gap-2">
+              {/* Edit Comic */}
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="gap-2 rounded-xl border-border/60 bg-muted/50 text-foreground hover:bg-muted"
+              >
+                <Link href={`/comic/${comic.id}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                  <span className="hidden sm:inline">Edit Comic</span>
+                </Link>
+              </Button>
 
-              {/* Delete */}
-              <button
+              {/* Delete Comic */}
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={handleDeleteComic}
                 disabled={deletingComic}
-                className={`group flex items-center gap-2 rounded-2xl px-4 py-3 text-sm transition ${
-                  deletingComic
-                    ? "cursor-not-allowed border border-zinc-800 bg-zinc-900 text-zinc-500"
-                    : "border border-red-500/20 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/20 hover:text-red-200"
-                }`}
+                className="gap-2 rounded-xl"
               >
-                <Trash2
-                  className={`h-4 w-4 ${
-                    deletingComic ? "" : "transition group-hover:scale-110"
-                  }`}
-                />
-                <span>{deletingComic ? "Deleting..." : "Delete Comic"}</span>
-              </button>
-            </nav>
-          </div>
-        </header>
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {deletingComic ? "Deleting..." : "Delete Comic"}
+                </span>
+              </Button>
+            </div>
+          }
+        />
 
         {/* Metadata */}
         <section
