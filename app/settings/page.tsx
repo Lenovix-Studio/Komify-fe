@@ -10,6 +10,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
@@ -46,35 +48,24 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          {/* Left */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="group flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 transition hover:border-indigo-500 hover:bg-indigo-500/10 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+      <Header
+        logo={false}
+        showSearch={false}
+        showRandom={false}
+        leftContent={
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
+          >
+            <Link href="/">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Back</span>
             </Link>
-
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Komify
-              </p>
-
-              <h1 className="text-sm font-semibold text-white">Settings</h1>
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="hidden items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-2 lg:flex">
-            <HardDrive className="h-4 w-4 text-indigo-400" />
-
-            <span className="text-sm text-zinc-300">Local Server Mode</span>
-          </div>
-        </div>
-      </header>
+          </Button>
+        }
+      />
 
       {/* Content */}
       <main className="mx-auto max-w-5xl px-6 py-10">
