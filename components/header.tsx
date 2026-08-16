@@ -78,6 +78,16 @@ export function Header({
             centerContent
           ) : hasDefaultCenter ? (
             <div className="flex items-center gap-2 w-full">
+              {showRandom && (
+                <Button
+                  title="Random Comic"
+                  variant="outline"
+                  onClick={onRandomClick}
+                  className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0 hidden md:flex"
+                >
+                  <Dices className="h-4 w-4" />
+                </Button>
+              )}
               {showSearch && (
                 <div className="relative w-full">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -101,17 +111,6 @@ export function Header({
                     </Button>
                   )}
                 </div>
-              )}
-
-              {showRandom && (
-                <Button
-                  variant="outline"
-                  onClick={onRandomClick}
-                  className="gap-2 rounded-xl border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors shrink-0 hidden md:flex"
-                >
-                  <Dices className="h-4 w-4" />
-                  <span>Random</span>
-                </Button>
               )}
             </div>
           ) : null}
