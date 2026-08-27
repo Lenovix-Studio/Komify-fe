@@ -14,6 +14,8 @@ import {
   RotateCw,
   Sparkles,
   Loader2,
+  RefreshCw,
+  GripVertical,
 } from "lucide-react";
 import Cropper from "react-easy-crop";
 import {
@@ -616,7 +618,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div>
       <Header
         logo={false}
         showSearch={false}
@@ -626,7 +628,7 @@ export default function UploadPage() {
             variant="outline"
             size="sm"
             asChild
-            className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
+            className="gap-1.5 rounded-xl border-border/80 bg-card hover:bg-accent hover:text-foreground shadow-xs"
           >
             <Link href="/">
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -635,7 +637,7 @@ export default function UploadPage() {
           </Button>
         }
         centerContent={
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-muted/40 p-1">
+          <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-card p-1 shadow-xs">
             {[
               { key: "doujinshi", label: "Doujinshi" },
               { key: "manga", label: "Manga" },
@@ -647,12 +649,12 @@ export default function UploadPage() {
                   key={item.key}
                   type="button"
                   variant={isActive ? "default" : "ghost"}
-                  size="xs"
+                  size="sm"
                   onClick={() => setActiveTemplate(item.key)}
-                  className={`rounded-lg px-3 text-xs transition-all ${
+                  className={`h-7 rounded-lg px-3 text-xs font-medium transition-all ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
                   {item.label}
@@ -664,11 +666,10 @@ export default function UploadPage() {
         rightContent={
           <Button
             type="button"
-            variant="glow"
             size="sm"
             onClick={handlePublish}
             disabled={isPublishing}
-            className="gap-2 rounded-xl"
+            className="gap-2 rounded-xl bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
           >
             {isPublishing ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -681,27 +682,25 @@ export default function UploadPage() {
       />
 
       {/* Content */}
-      <main className="mx-auto grid max-w-500 grid-cols-1 gap-6 px-6 pb-10 lg:grid-cols-[1fr_2fr_2fr]">
+      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 pb-10 lg:grid-cols-[1fr_2fr_2fr] mt-6">
         {/* ================= LEFT: COVER ================= */}
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6 h-fit">
+        <section className="h-fit rounded-3xl border border-border/80 bg-card p-6 shadow-sm transition-all">
           {/* Header */}
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <ImageIcon className="h-4 w-4 text-indigo-400" />
-              Cover
-            </h2>
-
-            {/* Status */}
-            <select className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none transition focus:border-indigo-500">
-              {statuses.map((status) => (
-                <option key={status.id} value={status.id}>
-                  {status.name}
-                </option>
-              ))}
-            </select>
+          <div className="mb-4 flex items-center justify-between border-b border-border/60 pb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ImageIcon className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">Cover</h2>
+                <p className="text-[11px] text-muted-foreground">
+                  Gambar sampul utama
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Input File */}
+          {/* Input File Hidden */}
           <input
             type="file"
             id="cover-upload"
@@ -713,7 +712,7 @@ export default function UploadPage() {
             }}
           />
 
-          {/* Preview Box */}
+          {/* Preview / Dropzone Box */}
           <div
             onClick={(e) => {
               if (coverImage) {
@@ -722,27 +721,34 @@ export default function UploadPage() {
                 document.getElementById("cover-upload")?.click();
               }
             }}
-            className="group relative block aspect-2/3 overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 cursor-pointer transition hover:border-indigo-500/40"
+            className="group relative block aspect-2/3 w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
           >
             {coverImage ? (
-              <>
-                <img
-                  src={coverImage}
-                  alt="Comic Cover"
-                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                />
-              </>
+              <img
+                src={coverImage}
+                alt="Comic Cover"
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-4 text-zinc-500">
+              <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-muted-foreground">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-muted-foreground shadow-xs transition duration-300 group-hover:scale-110 group-hover:border-primary/40 group-hover:text-primary">
+                  <Upload className="h-5 w-5" />
+                </div>
                 <div className="text-center">
-                  <p className="mt-1 text-xs text-zinc-600">Cover</p>
+                  <p className="text-xs font-semibold text-foreground">
+                    Upload Cover Image
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    JPG, PNG atau WEBP • Click to browse
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Hover Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
-              <span className="rounded-2xl border border-white/10 bg-zinc-900/80 px-4 py-2 text-xs font-semibold text-zinc-200 backdrop-blur-md">
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 backdrop-blur-[2px] transition duration-200 group-hover:opacity-100">
+              <span className="flex items-center gap-1.5 rounded-xl border border-border bg-background/90 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
                 {coverImage ? "Edit / Re-crop Image" : "Choose File"}
               </span>
             </div>
@@ -750,43 +756,86 @@ export default function UploadPage() {
 
           {/* Footer Actions */}
           {coverImage && (
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => document.getElementById("cover-upload")?.click()}
-                className="rounded-2xl border border-zinc-800 py-3 text-xs font-semibold text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                className="rounded-xl border border-input bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
               >
-                Replace File
+                Replace
               </button>
 
               <button
+                type="button"
                 onClick={() => setCoverImage(null)}
-                className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3 text-xs font-semibold text-red-400 transition hover:bg-red-500/20"
+                className="rounded-xl border border-destructive/20 bg-destructive/10 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
               >
-                Remove Cover
+                Remove
               </button>
             </div>
           )}
+
+          {/* Status Section */}
+          <div className="mt-5 space-y-1.5 border-t border-border/60 pt-4">
+            <label className="block text-xs font-semibold text-foreground/80">
+              Publication Status <span className="text-destructive">*</span>
+            </label>
+            <select
+              onChange={(e) =>
+                setMetadata((prev) => ({
+                  ...prev,
+                  status_id: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-xs font-medium text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {statuses.map((status) => (
+                <option key={status.id} value={status.id}>
+                  {status.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </section>
 
         {/* ================= MIDDLE: METADATA ================= */}
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6 h-fit">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <BookOpen className="h-4 w-4 text-indigo-400" />
-              Metadata
-            </h2>
+        <section className="h-fit rounded-3xl border border-border/80 bg-card p-6 shadow-sm transition-all">
+          {/* Header */}
+          <div className="mb-5 flex items-center justify-between border-b border-border/60 pb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <BookOpen className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  Metadata
+                </h2>
+                <p className="text-[11px] text-muted-foreground">
+                  Kelola atribut & relasi karya
+                </p>
+              </div>
+            </div>
+
+            {/* Action Button Extract */}
             <button
+              type="button"
               onClick={() => setShowExtractModal(true)}
-              className="flex items-center gap-2 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-2 text-xs font-semibold text-indigo-300 transition hover:bg-indigo-500/20 hover:text-white"
+              className="flex items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3.5 w-3.5" />
               Extract
             </button>
           </div>
 
-          <div className="space-y-5">
+          {/* Fields List */}
+          <div className="space-y-4">
             {[
-              { key: "title", label: "Title", placeholder: "Comic Title" },
+              {
+                key: "title",
+                label: "Title",
+                placeholder: "Comic Title",
+                required: true,
+              },
               {
                 key: "parodies",
                 label: "Parodies",
@@ -834,60 +883,63 @@ export default function UploadPage() {
                 return true;
               })
               .map((field) => (
-                <div key={field.label}>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                    {field.label}
-                  </label>
+                <div key={field.key} className="group">
+                  {/* Field Label & Top Action */}
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label className="text-xs font-semibold text-foreground/80">
+                      {field.label}{" "}
+                      {field.required && (
+                        <span className="text-destructive">*</span>
+                      )}
+                    </label>
 
-                  <div className="flex gap-2">
-                    {/* Input */}
-                    <input
-                      type="text"
-                      value={metadata[field.key as keyof typeof metadata]}
-                      onChange={(e) =>
-                        setMetadata((prev) => ({
-                          ...prev,
-                          [field.key]: e.target.value,
-                        }))
-                      }
-                      placeholder={field.placeholder}
-                      className="flex-1 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
-                    />
-
-                    {/* Fix Button */}
                     {field.key !== "title" && (
                       <button
+                        type="button"
                         onClick={() =>
                           openFixModal(
                             field.label,
                             metadata[field.key as keyof typeof metadata],
                           )
                         }
-                        className="shrink-0 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-indigo-300 transition hover:border-indigo-500/40 hover:bg-indigo-500/20 hover:text-white"
+                        className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
                       >
-                        Fix
+                        <Sparkles className="h-3 w-3" /> Fix
                       </button>
                     )}
                   </div>
+
+                  {/* Input Control */}
+                  <input
+                    type="text"
+                    value={metadata[field.key as keyof typeof metadata]}
+                    onChange={(e) =>
+                      setMetadata((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                    placeholder={field.placeholder}
+                    className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
                 </div>
               ))}
           </div>
         </section>
 
         {/* ================= RIGHT: CHAPTERS ================= */}
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6 h-fit">
+        <section className="h-fit rounded-3xl border border-slate-200 bg-slate-50/70 p-6 shadow-sm">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
-            {/* Left */}
-            <h2 className="flex items-center gap-2 text-lg font-bold text-white">
-              <FilePlus className="h-4 w-4 text-indigo-400" />
+            <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+              <FilePlus className="h-4 w-4 text-indigo-600" />
               Chapters
             </h2>
 
-            {/* Right - Add Chapter */}
             <button
+              type="button"
               onClick={addChapter}
-              className="flex items-center gap-2 rounded-2xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
+              className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
             >
               <Plus className="h-4 w-4" />
               Add Chapter
@@ -908,38 +960,22 @@ export default function UploadPage() {
                 {sortedChapters.map((chapter) => (
                   <SortableChapter key={chapter.id} chapter={chapter}>
                     {({ dragHandleProps }: any) => (
-                      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-indigo-500/40">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
                         {/* Header Row */}
-                        <div className="mb-4 flex items-center justify-between">
+                        <div className="mb-4 flex items-center justify-between gap-2">
                           <div className="flex items-center gap-3">
                             {/* Drag Handle */}
                             <button
+                              type="button"
                               {...dragHandleProps}
-                              className="cursor-grab rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-500 transition hover:border-indigo-500 hover:text-white active:cursor-grabbing"
+                              className="cursor-grab rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-400 transition hover:border-indigo-300 hover:bg-white hover:text-indigo-600 active:cursor-grabbing"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <circle cx="9" cy="5" r="1" />
-                                <circle cx="9" cy="12" r="1" />
-                                <circle cx="9" cy="19" r="1" />
-                                <circle cx="15" cy="5" r="1" />
-                                <circle cx="15" cy="12" r="1" />
-                                <circle cx="15" cy="19" r="1" />
-                              </svg>
+                              <GripVertical className="h-4 w-4" />
                             </button>
 
                             {/* Chapter Inputs */}
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-zinc-500">
+                              <span className="text-xs font-medium text-slate-500">
                                 Chapter
                               </span>
 
@@ -954,10 +990,12 @@ export default function UploadPage() {
                                       Number(e.target.value),
                                     )
                                   }
-                                  className="w-14 rounded-xl border border-zinc-800 bg-zinc-900 px-2 py-2 text-center text-sm font-semibold text-indigo-300 outline-none focus:border-indigo-500"
+                                  className="w-14 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-center text-sm font-semibold text-indigo-600 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
                                 />
 
-                                <span className="text-zinc-500">.</span>
+                                <span className="font-bold text-slate-400">
+                                  .
+                                </span>
 
                                 <input
                                   type="number"
@@ -969,7 +1007,7 @@ export default function UploadPage() {
                                       Number(e.target.value),
                                     )
                                   }
-                                  className="w-14 rounded-xl border border-zinc-800 bg-zinc-900 px-2 py-2 text-center text-sm font-semibold text-indigo-300 outline-none focus:border-indigo-500"
+                                  className="w-14 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-center text-sm font-semibold text-indigo-600 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10"
                                 />
                               </div>
                             </div>
@@ -978,8 +1016,9 @@ export default function UploadPage() {
                           {/* Actions */}
                           <div className="flex items-center gap-3 text-xs">
                             <button
+                              type="button"
                               onClick={() => removeChapter(chapter.id)}
-                              className="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-red-400"
+                              className="rounded-xl p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-500"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -987,7 +1026,7 @@ export default function UploadPage() {
                         </div>
 
                         {/* Content Grid */}
-                        <div className="grid gap-3 md:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
                           {/* Title */}
                           <input
                             type="text"
@@ -996,10 +1035,10 @@ export default function UploadPage() {
                             onChange={(e) =>
                               updateChapter(chapter.id, "title", e.target.value)
                             }
-                            className="md:col-span-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 sm:col-span-2 md:col-span-2"
                           />
 
-                          {/* censored/Uncesored */}
+                          {/* Censorship */}
                           <select
                             value={chapter.censorship_id}
                             onChange={(e) =>
@@ -1009,7 +1048,7 @@ export default function UploadPage() {
                                 e.target.value,
                               )
                             }
-                            className="md:col-span-1 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 sm:col-span-1 md:col-span-1"
                           >
                             {censorships.map((censorship) => (
                               <option key={censorship.id} value={censorship.id}>
@@ -1028,7 +1067,7 @@ export default function UploadPage() {
                                 e.target.value,
                               )
                             }
-                            className="md:col-span-1 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 sm:col-span-1 md:col-span-1"
                           >
                             {languages.map((language) => (
                               <option key={language.code} value={language.code}>
@@ -1037,42 +1076,26 @@ export default function UploadPage() {
                             ))}
                           </select>
 
-                          {/* Upload */}
+                          {/* Upload Section */}
                           {chapter.pages.length === 0 ? (
-                            // 1. TAMPILAN JIKA BELUM ADA GAMBAR (Tombol Upload Sederhana & Bersih)
                             <label
                               htmlFor={`input-file-chapter-${chapter.id}`}
-                              className="md:col-span-5 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20 px-4 py-7 text-zinc-400 transition duration-200 hover:border-indigo-500/50 hover:bg-zinc-900/50 hover:text-indigo-300"
+                              className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-7 text-slate-500 transition duration-200 hover:border-indigo-400 hover:bg-indigo-50/30 hover:text-indigo-600 sm:col-span-2 md:col-span-4"
                             >
-                              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 shadow-xs">
-                                <svg
-                                  xmlns="http://w3.org"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                  <polyline points="17 8 12 3 7 8" />
-                                  <line x1="12" y1="3" x2="12" y2="15" />
-                                </svg>
+                              <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm">
+                                <Upload className="h-4 w-4" />
                               </div>
                               <div className="text-center">
-                                <span className="text-xs font-semibold block text-zinc-300">
+                                <span className="block text-xs font-semibold text-slate-700">
                                   Upload Chapter Pages
                                 </span>
-                                <span className="text-[10px] text-zinc-600">
+                                <span className="text-[10px] text-slate-400">
                                   JPG, PNG or ZIP • Drag & drop
                                 </span>
                               </div>
 
                               <input
                                 type="file"
-                                // GANTI INI: Samakan dengan htmlFor milik label di atas
                                 id={`input-file-chapter-${chapter.id}`}
                                 accept="image/*,.pdf"
                                 className="hidden"
@@ -1086,76 +1109,38 @@ export default function UploadPage() {
                               />
                             </label>
                           ) : (
-                            // 2. TAMPILAN MODERN JIKA SUDAH ADA GAMBAR (Sleek Horizontal Badge)
-                            <div className="md:col-span-5 flex items-center justify-between gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-3 shadow-xs shadow-indigo-500/2">
-                              {/* Sisi Kiri: Status & Jumlah File */}
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                                  <svg
-                                    xmlns="http://w3.org"
-                                    width="15"
-                                    height="15"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <rect
-                                      x="3"
-                                      y="3"
-                                      width="18"
-                                      height="18"
-                                      rx="2"
-                                      ry="2"
-                                    />
-                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                    <polyline points="21 15 16 10 5 21" />
-                                  </svg>
+                            <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3 shadow-sm sm:col-span-2 md:col-span-4">
+                              <div className="flex min-w-0 items-center gap-2.5">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-white text-indigo-600 shadow-sm">
+                                  <ImageIcon className="h-4 w-4" />
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs font-bold text-zinc-200 truncate">
+                                  <p className="truncate text-xs font-bold text-slate-800">
                                     Pages Loaded Successfully
                                   </p>
-                                  <p className="text-[10px] font-medium text-indigo-400/80">
+                                  <p className="text-[10px] font-medium text-indigo-600">
                                     {chapter.pages.length} images ready
                                   </p>
                                 </div>
                               </div>
 
-                              {/* Sisi Kanan: Grup Tombol Aksi yang Efisien */}
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {/* Tombol Manage / Edit (Membuka Popup Grid) */}
+                              <div className="flex shrink-0 items-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     handleOpenPreview(chapter.id, chapter.pages)
                                   }
-                                  className="rounded-xl bg-zinc-900 border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-indigo-500 hover:text-white"
+                                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-600"
                                 >
                                   Manage
                                 </button>
 
-                                {/* Tombol Re-upload Cepat */}
                                 <label
                                   htmlFor={`replace-file-chapter-${chapter.id}`}
-                                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+                                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-800"
                                   title="Replace all files"
                                 >
-                                  <svg
-                                    xmlns="http://w3.org"
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                                  </svg>
+                                  <RefreshCw className="h-3.5 w-3.5" />
                                   <input
                                     type="file"
                                     id={`replace-file-chapter-${chapter.id}`}

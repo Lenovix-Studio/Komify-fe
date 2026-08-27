@@ -67,6 +67,8 @@ export default function ChapterReaderPage() {
   >([]);
   const [chapterInput, setChapterInput] = useState("");
   const [zoom, setZoom] = useState(80);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -139,6 +141,24 @@ export default function ChapterReaderPage() {
     return "max-w-4xl";
   };
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Sembunyikan jika scroll ke bawah > 80px, tampilkan jika scroll ke atas
+      if (currentScrollY > 80 && currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
@@ -156,62 +176,76 @@ export default function ChapterReaderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Top Reader Bar */}
-      <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-black/80 backdrop-blur-2xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-          {/* Left */}
-          <div className="flex min-w-0 items-center gap-3">
-            {/* Back */}
+      <header
+        className={`sticky top-0 z-50 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-transform duration-300 supports-backdrop-filter:bg-background/60 ${
+          isVisible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
+        <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          {/* Left Side: Navigation & Info */}
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <Link
               href={`/comic/${slug}`}
-              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 transition hover:border-indigo-500 hover:bg-indigo-500/10 hover:text-white"
+              className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card text-muted-foreground transition-all hover:border-primary/50 hover:bg-accent hover:text-foreground shadow-xs"
+              aria-label="Kembali ke komik"
             >
-              <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             </Link>
 
-            {/* Title */}
             <div className="min-w-0">
-              <p className="line-clamp-1 text-sm font-semibold text-white">
+              <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
                 {chapter.title || `Chapter ${chapter.chapter_number}`}
-              </p>
+              </h1>
 
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                <span>Chapter {chapter.chapter_number}</span>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground/80">
+                  Ch. {chapter.chapter_number}
+                </span>
+                <span className="h-1 w-1 rounded-full bg-border" />
+                <span>{chapter.total_pages} Hal</span>
 
-                <span className="h-1 w-1 rounded-full bg-zinc-700" />
-                <span>Total Pages: {chapter.total_pages}</span>
+                {chapter.language?.name && (
+                  <>
+                    <span className="h-1 w-1 rounded-full bg-border" />
+                    <span>{chapter.language.name}</span>
+                  </>
+                )}
 
-                <span className="h-1 w-1 rounded-full bg-zinc-700" />
-                <span>{chapter.language.name}</span>
-
-                <span className="h-1 w-1 rounded-full bg-zinc-700" />
-                <span>{chapter.censorship.name}</span>
+                {chapter.censorship?.name && (
+                  <>
+                    <span className="h-1 w-1 rounded-full bg-border" />
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {chapter.censorship.name}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          {/* tambahkan tombol link ke halaman edit chapternya */}
-          <Link
-            href={`/comic/${slug}/chapter/${chapterId}/edit`}
-            className="flex items-center gap-2 rounded-2xl bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Chapter
-          </Link>
+          {/* Right Side: Action Button */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={`/comic/${slug}/chapter/${chapterId}/edit`}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit Chapter</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Reader */}
       <main className="mx-auto flex max-w-5xl flex-col items-center px-4 py-6">
-        {/* Reader Pages */}
         <div
           className={`w-full ${getZoomClass()} mx-auto space-y-4 transition-all duration-300`}
         >
           {chapter.pages.map((page) => (
             <div
               key={page.id}
-              className="group relative overflow-hidden rounded-3xl border border-zinc-900 bg-zinc-950 shadow-2xl"
+              className="group relative overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm"
             >
               <div className="relative">
                 <Image
@@ -225,28 +259,25 @@ export default function ChapterReaderPage() {
                 />
               </div>
 
-              {/* Hover Overlay */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-linear-to-t from-black/80 to-transparent px-5 py-4 opacity-0 transition duration-200 group-hover:opacity-100">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-linear-to-t from-black/75 via-black/40 to-transparent px-5 py-4 opacity-0 transition duration-200 group-hover:opacity-100">
                 <p className="text-sm font-medium text-white">
                   Page {page.page_number}
                 </p>
-                <p className="text-xs text-zinc-400">{page.filename}</p>
+                <p className="text-xs text-white/80">{page.filename}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Floating Navigation */}
         <div className="fixed right-6 bottom-6 z-50">
-          <div className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/90 p-1.5 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
             <div className="flex items-center">
-              {/* Zoom Out */}
               <button
                 onClick={() => setZoom((prev) => Math.max(60, prev - 20))}
                 disabled={zoom <= 60}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all ${
                   zoom > 60
-                    ? "hover:bg-zinc-800 hover:text-white"
+                    ? "hover:bg-accent hover:text-foreground"
                     : "cursor-not-allowed opacity-30"
                 }`}
                 title="Zoom Out"
@@ -254,18 +285,16 @@ export default function ChapterReaderPage() {
                 <ZoomOut className="h-4 w-4" />
               </button>
 
-              {/* Indikator Persentase Zoom */}
-              <span className="w-12 text-center text-[11px] font-semibold tracking-wide text-zinc-400 select-none">
+              <span className="w-12 text-center text-[11px] font-semibold tracking-wide text-muted-foreground select-none">
                 {zoom}%
               </span>
 
-              {/* Zoom In */}
               <button
                 onClick={() => setZoom((prev) => Math.min(100, prev + 20))}
                 disabled={zoom >= 100}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all ${
                   zoom < 100
-                    ? "hover:bg-zinc-800 hover:text-white"
+                    ? "hover:bg-accent hover:text-foreground"
                     : "cursor-not-allowed opacity-30"
                 }`}
                 title="Zoom In"
@@ -274,17 +303,15 @@ export default function ChapterReaderPage() {
               </button>
             </div>
 
-            {/* SEPARATOR LINE */}
-            <div className="h-5 w-px bg-zinc-800 mx-1" />
+            <div className="h-5 w-px bg-border/80 mx-1" />
 
             <div className="flex items-center gap-1.5">
-              {/* Prev Chapter */}
               <button
                 onClick={goPrevChapter}
                 disabled={!prevChapter}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all ${
                   prevChapter
-                    ? "hover:bg-zinc-800 hover:text-white"
+                    ? "hover:bg-accent hover:text-foreground"
                     : "cursor-not-allowed opacity-30"
                 }`}
                 title="Previous Chapter"
@@ -292,9 +319,8 @@ export default function ChapterReaderPage() {
                 <ChevronLeft className="h-5 w-5" />
               </button>
 
-              {/* Chapter Input Box */}
-              <div className="flex items-center gap-1.5 rounded-full bg-zinc-800/50 px-3.5 py-1.5 border border-zinc-800/40 focus-within:border-indigo-500/50 transition-all">
-                <span className="text-[11px] font-medium text-zinc-500 select-none uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3.5 py-1.5 border border-border/60 focus-within:border-primary/50 transition-all">
+                <span className="text-[11px] font-medium text-muted-foreground select-none uppercase tracking-wider">
                   Ch
                 </span>
                 <input
@@ -306,18 +332,17 @@ export default function ChapterReaderPage() {
                       jumpToChapter();
                     }
                   }}
-                  className="w-10 bg-transparent text-center text-sm font-bold text-zinc-100 outline-none placeholder-zinc-600"
+                  className="w-10 bg-transparent text-center text-sm font-bold text-foreground outline-none placeholder-muted-foreground/60"
                 />
               </div>
 
-              {/* Next Chapter */}
               <button
                 onClick={goNextChapter}
                 disabled={!nextChapter}
                 className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
                   nextChapter
-                    ? "bg-indigo-600 text-white hover:bg-indigo-500 hover:scale-105 shadow-md shadow-indigo-600/20"
-                    : "cursor-not-allowed bg-zinc-800/50 text-zinc-600 opacity-40"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 shadow-xs"
+                    : "cursor-not-allowed bg-muted text-muted-foreground opacity-40"
                 }`}
                 title="Next Chapter"
               >

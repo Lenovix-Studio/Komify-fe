@@ -236,10 +236,10 @@ export default function HomePage() {
             <Button
               variant="ghost"
               asChild
-              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
+              className="gap-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Link href="/bookmark">
-                <Bookmark className="h-4 w-4" />
+                <Bookmark className="h-4 w-4 text-muted-foreground/80" />
                 <span className="hidden md:inline">Bookmark</span>
               </Link>
             </Button>
@@ -247,10 +247,10 @@ export default function HomePage() {
             <Button
               variant="ghost"
               asChild
-              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
+              className="gap-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Link href="/upload">
-                <Upload className="h-4 w-4" />
+                <Upload className="h-4 w-4 text-muted-foreground/80" />
                 <span className="hidden md:inline">Upload</span>
               </Link>
             </Button>
@@ -258,10 +258,10 @@ export default function HomePage() {
             <Button
               variant="ghost"
               asChild
-              className="rounded-xl gap-2 text-muted-foreground hover:text-foreground"
+              className="gap-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Link href="/settings">
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4 text-muted-foreground/80" />
                 <span className="hidden md:inline">Settings</span>
               </Link>
             </Button>
@@ -269,10 +269,10 @@ export default function HomePage() {
         }
       />
 
-      <section className="flex flex-1 flex-col overflow-hidden mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex-1 overflow-y-auto pr-1 ">
+      <section className="mx-auto flex flex-1 w-full max-w-7xl flex-col">
+        <div className="flex-1 overflow-y-auto py-4 pr-1">
           {comics.length > 0 || loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <ComicCardSkeleton key={index} />
@@ -288,10 +288,10 @@ export default function HomePage() {
           ) : null}
 
           {!loading && comics.length === 0 && (
-            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center">
-              <div className="rounded-full bg-muted p-4 mb-3">
+            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card p-12 text-center shadow-xs">
+              <div className="mb-3 rounded-full bg-accent/60 p-4">
                 <svg
-                  className="h-8 w-8 text-muted-foreground"
+                  className="h-8 w-8 text-muted-foreground/80"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -307,7 +307,7 @@ export default function HomePage() {
               <h3 className="text-base font-semibold text-foreground">
                 Tidak Ada Komik
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground/80">
                 Belum ada data komik yang tersedia saat ini.
               </p>
             </div>
@@ -315,7 +315,7 @@ export default function HomePage() {
         </div>
 
         {!loading && pagination.total_data > 12 && (
-          <div className="shrink-0 border-t border-border/40 bg-background/80 py-3 backdrop-blur-md">
+          <div className="shrink-0 border-t border-border/40 bg-background/95 py-3 backdrop-blur-md">
             <PaginationControl
               currentPage={page}
               totalPages={pagination.total_pages}

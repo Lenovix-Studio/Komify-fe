@@ -1,6 +1,12 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  MoreHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -57,31 +63,37 @@ export function PaginationControl({
     <nav
       role="navigation"
       aria-label="pagination"
-      className={cn(
-        "mt-10 flex items-center justify-center gap-1.5",
-        className,
-      )}
+      className={cn("flex items-center justify-center gap-1.5", className)}
     >
-      {/* Previous Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={!hasPrev}
+        onClick={() => onPageChange(1)}
+        className="h-9 w-9 rounded-xl border-border/80 bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground disabled:bg-transparent disabled:opacity-40"
+        title="First Page"
+      >
+        <ChevronsLeft className="h-4 w-4" />
+      </Button>
+
       <Button
         variant="outline"
         size="default"
         disabled={!hasPrev}
         onClick={() => onPageChange(currentPage - 1)}
-        className="gap-1 rounded-xl border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+        className="gap-1 rounded-xl border-border/80 bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground disabled:bg-transparent disabled:opacity-40"
       >
         <ChevronLeft className="h-4 w-4" />
         <span className="hidden sm:inline">Prev</span>
       </Button>
 
-      {/* Page Numbers */}
       <div className="flex items-center gap-1.5">
         {pages.map((item, index) => {
           if (item === "ellipsis-start" || item === "ellipsis-end") {
             return (
               <div
                 key={`${item}-${index}`}
-                className="flex h-9 w-9 items-center justify-center text-muted-foreground"
+                className="flex h-9 w-9 items-center justify-center text-muted-foreground/70"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </div>
@@ -97,10 +109,10 @@ export function PaginationControl({
               size="icon"
               onClick={() => onPageChange(item)}
               className={cn(
-                "h-9 w-9 rounded-xl font-medium transition-all text-sm",
+                "h-9 w-9 rounded-xl text-sm font-medium transition-all",
                 isCurrent
-                  ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                  : "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  ? "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90"
+                  : "border-border/80 bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
               )}
             >
               {item}
@@ -109,16 +121,26 @@ export function PaginationControl({
         })}
       </div>
 
-      {/* Next Button */}
       <Button
         variant="outline"
         size="default"
         disabled={!hasNext}
         onClick={() => onPageChange(currentPage + 1)}
-        className="gap-1 rounded-xl border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+        className="gap-1 rounded-xl border-border/80 bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground disabled:bg-transparent disabled:opacity-40"
       >
         <span className="hidden sm:inline">Next</span>
         <ChevronRight className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={!hasNext}
+        onClick={() => onPageChange(totalPages)}
+        className="h-9 w-9 rounded-xl border-border/80 bg-card text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground disabled:bg-transparent disabled:opacity-40"
+        title="Last Page"
+      >
+        <ChevronsRight className="h-4 w-4" />
       </Button>
     </nav>
   );

@@ -5,8 +5,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Cropper from "react-easy-crop";
 import {
-  ArrowLeft,
+  Upload,
   Save,
+  FileText,
   ImageIcon,
   BookOpen,
   RotateCw,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 import { getCroppedImg } from "@/lib/cropImage";
 import { useRouter } from "next/navigation";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 
 type ComicMetadata = {
   id: string;
@@ -80,6 +83,14 @@ type Status = {
   created_at: string;
   updated_at: string;
 };
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
 
 export default function EditComicPage() {
   const router = useRouter();
@@ -87,83 +98,10 @@ export default function EditComicPage() {
   const slug = params.slug as string;
   const [loadingComic, setLoadingComic] = useState(true);
   const [coverFile, setCoverFile] = useState<File | null>(null);
-
-  const [isSaving, setIsSaving] = useState(false);
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-
-      // =========================
-      // BUILD DOCUMENT
-      // =========================
-      const document = {
-        metadata: {
-          title: metadata.title,
-          alternative_title: metadata.alternative_title || null,
-          description: metadata.description || null,
-          parodies: metadata.parodies,
-          characters: metadata.characters,
-          artists: metadata.artists,
-          authors: metadata.authors,
-          groups: metadata.groups,
-          tags: metadata.tags,
-          status_id: metadata.status_id,
-        },
-      };
-
-      // =========================
-      // FORM DATA
-      // =========================
-      const formData = new FormData();
-      formData.append("document", JSON.stringify(document));
-      if (coverFile) {
-        formData.append("cover", coverFile);
-      }
-
-      // =========================
-      // REQUEST
-      // =========================
-      const response = await fetch(`${baseUrl}/comics/${slug}`, {
-        method: "PUT",
-        body: formData,
-      });
-      const result = await response.json();
-      console.log(formData.get("document"));
-      console.log(formData.get("cover"));
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to update comic");
-      }
-      alert("Comic updated successfully");
-
-      // redirect ke halaman comic detail
-      router.push(`/comic/${slug}`);
-    } catch (error) {
-      console.error(error);
-
-      alert(error instanceof Error ? error.message : "Failed to save comic");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Fix Metadata Modal states
-  const [fixModal, setFixModal] = useState<{
-    open: boolean;
-    field: string;
-    value: string;
-    preview: string;
-  }>({
-    open: false,
-    field: "",
-    value: "",
-    preview: "",
-  });
-  const [comicCategory, setComicCategory] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState<string>("");
   const [statuses, setStatuses] = useState<Status[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [metadata, setMetadata] = useState({
     legacy_id: "",
     title: "",
@@ -176,110 +114,8 @@ export default function EditComicPage() {
     tags: "",
     description: "",
     status_id: "",
+    category: "",
   });
-  useEffect(() => {
-    const fetchCommonData = async () => {
-      try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-        const response = await fetch(`${baseUrl}/system/statuses`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch statuses");
-        }
-        const data: Status[] = await response.json();
-        setStatuses(data);
-      } catch (error) {
-        console.error("Failed to fetch statuses:", error);
-      }
-    };
-
-    fetchCommonData();
-  }, []);
-  useEffect(() => {
-    const fetchComic = async () => {
-      try {
-        setLoadingComic(true);
-
-        const baseUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-        const response = await fetch(`${baseUrl}/comics/${slug}/metadata`, {
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch comic");
-        }
-
-        const data: ComicMetadata = await response.json();
-        setComicCategory(data.category?.name?.toLowerCase() || "");
-        setMetadata({
-          legacy_id: String(data.legacy_id),
-          title: data.title || "",
-          alternative_title: data.alternative_title || "",
-          parodies: data.parodies.map((x) => x.name).join(", "),
-          characters: data.characters.map((x) => x.name).join(", "),
-          artists: data.artists.map((x) => x.name).join(", "),
-          authors: data.authors.map((x) => x.name).join(", "),
-          groups: data.groups.map((x) => x.name).join(", "),
-          tags: data.tags.map((x) => x.name).join(", "),
-          description: data.description || "",
-          status_id: data.status?.id || "",
-        });
-
-        setCoverImage(data.cover_path ? `${baseUrl}${data.cover_path}` : null);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoadingComic(false);
-      }
-    };
-
-    if (slug) {
-      fetchComic();
-    }
-  }, [slug]);
-  const fixParagraph = useCallback((text: any) => {
-    if (!text) return "";
-    let result = Array.isArray(text) ? text.join(", ") : String(text);
-    result = result.replace(/[|♀♂•−]/g, ",");
-    result = result.replace(/\s+\d+(\.\d+)?[km]?/gi, ",");
-    const parts = result
-      .split(",")
-      .map((p) => p.trim())
-      .filter(Boolean);
-    const unique = [...new Set(parts)];
-    return unique.join(", ");
-  }, []);
-  const openFixModal = (field: string, value: string) => {
-    setFixModal({
-      open: true,
-      field,
-      value,
-      preview: fixParagraph(value),
-    });
-  };
-  const saveFixMetadata = () => {
-    setMetadata((prev) => ({
-      ...prev,
-      [fixModal.field]: fixModal.preview,
-    }));
-
-    setFixModal({
-      open: false,
-      field: "",
-      value: "",
-      preview: "",
-    });
-  };
-  const generateFixPreview = () => {
-    setFixModal((prev) => ({
-      ...prev,
-      preview: fixParagraph(prev.value),
-    }));
-  };
-
-  // Crop states
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [originalSrc, setOriginalSrc] = useState<string | null>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -290,6 +126,125 @@ export default function EditComicPage() {
   const [savedCrop, setSavedCrop] = useState({ x: 0, y: 0 });
   const [savedRotation, setSavedRotation] = useState(0);
   const [savedZoom, setSavedZoom] = useState(1);
+  const [fixModal, setFixModal] = useState<{
+    open: boolean;
+    field: string;
+    value: string;
+    preview: string;
+  }>({
+    open: false,
+    field: "",
+    value: "",
+    preview: "",
+  });
+
+  // Fetch CommonData
+  useEffect(() => {
+    const fetchCommonData = async () => {
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+
+        const [statusRes, categoryRes] = await Promise.all([
+          fetch(`${baseUrl}/system/statuses`),
+          fetch(`${baseUrl}/system/categories`),
+        ]);
+
+        if (!statusRes.ok) throw new Error("Failed to fetch statuses");
+        if (!categoryRes.ok) throw new Error("Failed to fetch categories");
+
+        const [statusData, categoryData]: [Status[], Category[]] =
+          await Promise.all([statusRes.json(), categoryRes.json()]);
+
+        setStatuses(statusData);
+        setCategories(categoryData);
+      } catch (error) {
+        console.error("Failed to fetch common data:", error);
+      }
+    };
+
+    fetchCommonData();
+  }, []);
+
+  // Fetch Comic Metadata
+  useEffect(() => {
+    const fetchComic = async () => {
+      try {
+        setLoadingComic(true);
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+        const response = await fetch(`${baseUrl}/comics/${slug}/metadata`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch comic metadata");
+
+        const data: ComicMetadata = await response.json();
+
+        // Set category template secara otomatis dari data backend
+        const categorySlug =
+          data.category?.slug?.toLowerCase() ||
+          data.category?.name?.toLowerCase() ||
+          "doujinshi";
+        setActiveTemplate(categorySlug);
+
+        setMetadata({
+          legacy_id: String(data.legacy_id || ""),
+          title: data.title || "",
+          alternative_title: data.alternative_title || "",
+          parodies: data.parodies?.map((x) => x.name).join(", ") || "",
+          characters: data.characters?.map((x) => x.name).join(", ") || "",
+          artists: data.artists?.map((x) => x.name).join(", ") || "",
+          authors: data.authors?.map((x) => x.name).join(", ") || "",
+          groups: data.groups?.map((x) => x.name).join(", ") || "",
+          tags: data.tags?.map((x) => x.name).join(", ") || "",
+          description: data.description || "",
+          status_id: data.status?.id || "",
+          category: data.category?.id || "",
+        });
+
+        setCoverImage(data.cover_path ? `${baseUrl}${data.cover_path}` : null);
+      } catch (error) {
+        console.error("Fetch comic error:", error);
+      } finally {
+        setLoadingComic(false);
+      }
+    };
+
+    if (slug) fetchComic();
+  }, [slug]);
+
+  // Clean Paragraph Utility
+  const fixParagraph = useCallback((text: any) => {
+    if (!text) return "";
+    let result = Array.isArray(text) ? text.join(", ") : String(text);
+    result = result.replace(/[|♀♂•−]/g, ",");
+    result = result.replace(/\s+\d+(\.\d+)?[km]?/gi, ",");
+    const parts = result
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return [...new Set(parts)].join(", ");
+  }, []);
+
+  const openFixModal = (field: string, value: string) => {
+    setFixModal({
+      open: true,
+      field,
+      value,
+      preview: fixParagraph(value),
+    });
+  };
+
+  const saveFixMetadata = () => {
+    setMetadata((prev) => ({
+      ...prev,
+      [fixModal.field]: fixModal.preview,
+    }));
+    setFixModal({ open: false, field: "", value: "", preview: "" });
+  };
+
+  // Image Upload & Crop Handlers
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -302,12 +257,107 @@ export default function EditComicPage() {
         setCrop({ x: 0, y: 0 });
         setRotation(0);
         setZoom(1);
-        setSavedCrop({ x: 0, y: 0 });
-        setSavedRotation(0);
-        setSavedZoom(1);
       });
       reader.readAsDataURL(file);
     }
+  };
+
+  const saveCroppedImage = async () => {
+    if (!imageSrc || !croppedAreaPixels) return;
+    try {
+      const cropped = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        rotation,
+      );
+      if (!cropped) throw new Error("Failed to crop image");
+
+      setCoverImage(cropped);
+      const response = await fetch(cropped);
+      const blob = await response.blob();
+      const file = new File([blob], "cover.jpg", {
+        type: blob.type || "image/jpeg",
+      });
+      setCoverFile(file);
+
+      setSavedCrop(crop);
+      setSavedRotation(rotation);
+      setSavedZoom(zoom);
+      setImageSrc(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Submit Handler
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+
+      const selectedCategory = categories.find(
+        (c) => c.slug.toLowerCase() === activeTemplate.toLowerCase(),
+      );
+
+      const payloadMetadata: Record<string, any> = {
+        title: metadata.title,
+        alternative_title: metadata.alternative_title || null,
+        description: metadata.description || null,
+        parodies: metadata.parodies,
+        characters: metadata.characters,
+        artists: metadata.artists,
+        tags: metadata.tags,
+        status_id: metadata.status_id,
+        category: selectedCategory?.id || metadata.category,
+      };
+
+      if (activeTemplate === "manhwa") {
+        payloadMetadata.authors = metadata.authors;
+        payloadMetadata.groups = "";
+      } else {
+        payloadMetadata.groups = metadata.groups;
+        payloadMetadata.authors = "";
+      }
+
+      const formData = new FormData();
+      formData.append(
+        "document",
+        JSON.stringify({
+          template: activeTemplate,
+          metadata: payloadMetadata,
+        }),
+      );
+      if (coverFile) {
+        formData.append("cover", coverFile);
+      }
+
+      const response = await fetch(`${baseUrl}/comics/${slug}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update comic");
+      }
+
+      alert("Comic updated successfully");
+      router.push(`/comic/${slug}`);
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Failed to save comic");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const [comicCategory, setComicCategory] = useState("");
+  const generateFixPreview = () => {
+    setFixModal((prev) => ({
+      ...prev,
+      preview: fixParagraph(prev.value),
+    }));
   };
   const handleEditExisting = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -318,125 +368,90 @@ export default function EditComicPage() {
       setImageSrc(originalSrc);
     }
   };
-  const saveCroppedImage = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
-
-    try {
-      const cropped = await getCroppedImg(
-        imageSrc,
-        croppedAreaPixels,
-        rotation,
-      );
-
-      if (!cropped) {
-        throw new Error("Failed to crop image");
-      }
-      setCoverImage(cropped);
-
-      // =========================
-      // BASE64/BLOB URL -> FILE
-      // =========================
-      const response = await fetch(cropped);
-      const blob = await response.blob();
-      const file = new File([blob], "cover.jpg", {
-        type: blob.type || "image/jpeg",
-      });
-      setCoverFile(file);
-
-      // =========================
-      // SAVE STATE
-      // =========================
-      setSavedCrop(crop);
-      setSavedRotation(rotation);
-      setSavedZoom(zoom);
-      setImageSrc(null);
-    } catch (e) {
-      console.error(e);
-    }
-  };
   const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
   if (loadingComic) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <p className="text-sm text-zinc-500">Loading comic editor...</p>
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Loading comic editor...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-6">
-      {/* ================= HEADER ================= */}
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left */}
-        <div className="flex items-center gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-              Komify
-            </p>
-
-            <h1 className="text-2xl font-black text-white">
-              Edit Comic #{metadata.legacy_id}
-            </h1>
-          </div>
-        </div>
-
-        {/* Right */}
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/comic/${slug}`}
-            className="rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+    <>
+      <Header
+        logo={false}
+        showSearch={false}
+        showRandom={false}
+        leftContent={
+          <Button
+            variant="ghost"
+            asChild
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:px-5 sm:py-2.5 sm:text-sm"
           >
-            Cancel
-          </Link>
+            <Link href={`/comic/${slug}`}>Cancel</Link>
+          </Button>
+        }
+        centerContent={
+          <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-card p-1 shadow-xs">
+            {categories.map((category) => {
+              // Membandingkan slug kategori dengan activeTemplate
+              const isActive = activeTemplate === category.slug.toLowerCase();
 
-          <button
+              return (
+                <Button
+                  key={category.id}
+                  type="button"
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTemplate(category.slug.toLowerCase())}
+                  className={`h-7 rounded-lg px-3 text-xs font-medium capitalize transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  {category.name}
+                </Button>
+              );
+            })}
+          </div>
+        }
+        rightContent={
+          <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-sm"
           >
             <Save className={`h-4 w-4 ${isSaving ? "animate-spin" : ""}`} />
             {isSaving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
 
-      {/* ================= CONTENT ================= */}
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        {/* ================= LEFT ================= */}
-        <div className="space-y-6">
-          {/* Cover */}
-          <section className="h-fit rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6">
+      <div className="mx-auto max-w-7xl grid grid-cols-1 gap-6 lg:grid-cols-12 mt-6">
+        {/* ================= COLUMN 1: COVER (3 cols) ================= */}
+        <div className="lg:col-span-3">
+          <section className="h-fit rounded-3xl border border-border/80 bg-card p-6 shadow-sm transition-all">
             {/* Header */}
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <ImageIcon className="h-4 w-4 text-indigo-400" />
-                Cover
-              </h2>
-
-              {/* Status */}
-              <select
-                className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-300 outline-none transition focus:border-indigo-500"
-                value={metadata.status_id}
-                onChange={(e) =>
-                  setMetadata((prev) => ({
-                    ...prev,
-                    status_id: e.target.value,
-                  }))
-                }
-              >
-                <option value="">Select Status</option>
-                {statuses.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
+            <div className="mb-4 flex items-center justify-between border-b border-border/60 pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <ImageIcon className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Cover</h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Gambar sampul utama
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Input File */}
+            {/* Hidden File Input */}
             <input
               type="file"
               id="cover-upload"
@@ -448,7 +463,7 @@ export default function EditComicPage() {
               }}
             />
 
-            {/* Preview */}
+            {/* Upload Dropzone / Image Preview */}
             <div
               onClick={(e) => {
                 if (coverImage) {
@@ -457,7 +472,7 @@ export default function EditComicPage() {
                   document.getElementById("cover-upload")?.click();
                 }
               }}
-              className="group relative block aspect-2/3 cursor-pointer overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 transition hover:border-indigo-500/40"
+              className="group relative block aspect-2/3 w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
             >
               {coverImage ? (
                 <img
@@ -466,132 +481,239 @@ export default function EditComicPage() {
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                 />
               ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-4 text-zinc-500">
+                <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-muted-foreground">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-muted-foreground shadow-xs transition duration-300 group-hover:scale-110 group-hover:border-primary/40 group-hover:text-primary">
+                    <Upload className="h-5 w-5" />
+                  </div>
                   <div className="text-center">
-                    <p className="mt-1 text-xs text-zinc-600">Cover</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      Upload Cover Image
+                    </p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      WEBP, JPG, atau PNG
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
-                <span className="rounded-2xl border border-white/10 bg-zinc-900/80 px-4 py-2 text-xs font-semibold text-zinc-200 backdrop-blur-md">
-                  {coverImage ? "Edit / Re-crop Image" : "Choose File"}
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 backdrop-blur-[2px] transition duration-200 group-hover:opacity-100">
+                <span className="flex items-center gap-1.5 rounded-xl border border-border bg-background/90 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {coverImage ? "Edit Image" : "Choose File"}
                 </span>
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Action Buttons */}
             {coverImage && (
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
+                  type="button"
                   onClick={() =>
                     document.getElementById("cover-upload")?.click()
                   }
-                  className="rounded-2xl border border-zinc-800 py-3 text-xs font-semibold text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                  className="rounded-xl border border-input bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
                 >
-                  Replace File
+                  Replace
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setCoverImage(null)}
-                  className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3 text-xs font-semibold text-red-400 transition hover:bg-red-500/20"
+                  className="rounded-xl border border-destructive/20 bg-destructive/10 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
                 >
-                  Remove Cover
+                  Remove
                 </button>
               </div>
             )}
+
+            {/* Publication Status Selector */}
+            <div className="mt-5 space-y-1.5 border-t border-border/60 pt-4">
+              <label className="block text-xs font-semibold text-foreground/80">
+                Publication Status <span className="text-destructive">*</span>
+              </label>
+              <select
+                value={metadata.status_id}
+                onChange={(e) =>
+                  setMetadata((prev) => ({
+                    ...prev,
+                    status_id: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-xs font-medium text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {statuses.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </section>
         </div>
 
-        {/* ================= RIGHT ================= */}
-        <div className="space-y-6">
-          {/* Metadata */}
-          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6">
-            <div className="relative mb-6 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-white">
-                <BookOpen className="h-4 w-4 text-indigo-400" />
-                Metadata
-              </h2>
+        {/* ================= COLUMN 2: METADATA (5 cols) ================= */}
+        <div className="lg:col-span-5">
+          <section className="rounded-3xl border border-border/80 bg-card p-6 shadow-sm transition-all">
+            {/* Header */}
+            <div className="mb-5 flex items-center justify-between border-b border-border/60 pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">
+                    Metadata
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Kelola informasi detail karya
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  ID:
+                </span>
+                <span className="rounded-md border border-border bg-muted/60 px-2 py-0.5 font-mono text-xs font-semibold text-foreground">
+                  #{metadata.legacy_id}
+                </span>
+              </div>
             </div>
 
-            <div className="space-y-5">
+            {/* Form Inputs Container */}
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-foreground/80">
+                  Title <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={metadata.title}
+                  onChange={(e) =>
+                    setMetadata({ ...metadata, title: e.target.value })
+                  }
+                  placeholder="Masukkan judul utama"
+                  className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Alternative Title */}
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-foreground/80">
+                  Alternative Title
+                </label>
+                <input
+                  type="text"
+                  value={metadata.alternative_title}
+                  onChange={(e) =>
+                    setMetadata({
+                      ...metadata,
+                      alternative_title: e.target.value,
+                    })
+                  }
+                  placeholder="Judul alternatif (opsional)"
+                  className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Dynamic Metadata Fields */}
               {[
-                { label: "Title", key: "title" },
-                { label: "Alternative Title", key: "alternative_title" },
-                { label: "Parodies", key: "parodies" },
-                { label: "Characters", key: "characters" },
-                { label: "Artists", key: "artists" },
-
-                // Hide author jika manga/doujinshi
-                ...(comicCategory === "manga" || comicCategory === "doujinshi"
-                  ? []
-                  : [{ label: "Authors", key: "authors" }]),
-
-                // Hide group jika manhwa
-                ...(comicCategory === "manhwa"
-                  ? []
-                  : [{ label: "Groups", key: "groups" }]),
-
-                { label: "Tags", key: "tags" },
-              ].map((field) => (
-                <div key={field.key}>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                    {field.label}
-                  </label>
-
-                  <div className="flex gap-2">
-                    {/* Input */}
+                { label: "Parodies", key: "parodies", show: true },
+                { label: "Characters", key: "characters", show: true },
+                { label: "Artists", key: "artists", show: true },
+                {
+                  label: "Authors",
+                  key: "authors",
+                  show: activeTemplate === "manhwa",
+                },
+                {
+                  label: "Groups",
+                  key: "groups",
+                  show: activeTemplate !== "manhwa",
+                },
+                { label: "Tags", key: "tags", show: true },
+              ]
+                .filter((f) => f.show)
+                .map((field) => (
+                  <div key={field.key} className="group">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="text-xs font-semibold text-foreground/80">
+                        {field.label}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openFixModal(
+                            field.key,
+                            metadata[field.key as keyof typeof metadata],
+                          )
+                        }
+                        className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                      >
+                        <Sparkles className="h-3 w-3" /> Auto Clean
+                      </button>
+                    </div>
                     <input
                       type="text"
-                      placeholder={field.label}
                       value={metadata[field.key as keyof typeof metadata]}
                       onChange={(e) =>
-                        setMetadata((prev) => ({
-                          ...prev,
+                        setMetadata({
+                          ...metadata,
                           [field.key]: e.target.value,
-                        }))
+                        })
                       }
-                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
+                      placeholder="Dipisahkan dengan koma (contoh: item1, item2)"
+                      className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
-
-                    {/* Fix Button */}
-                    {field.label !== "Title" &&
-                      field.label !== "Alternative Title" && (
-                        <button
-                          onClick={() =>
-                            openFixModal(
-                              field.key,
-                              metadata[field.key as keyof typeof metadata],
-                            )
-                          }
-                          className="shrink-0 rounded-2xl border border-indigo-500/20 bg-indigo-500/10 px-4 text-xs font-semibold text-indigo-400 transition hover:bg-indigo-500/20"
-                        >
-                          Fix
-                        </button>
-                      )}
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </section>
+        </div>
 
-          {/* Synopsis */}
-          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6">
-            <h2 className="mb-4 text-lg font-bold text-white">Synopsis</h2>
+        {/* ================= COLUMN 3: SYNOPSIS (4 cols) ================= */}
+        <div className="lg:col-span-4">
+          <section className="flex h-full flex-col rounded-3xl border border-border/80 bg-card p-6 shadow-sm transition-all">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between border-b border-border/60 pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">
+                    Synopsis
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Deskripsi & ringkasan cerita
+                  </p>
+                </div>
+              </div>
 
-            <textarea
-              rows={8}
-              placeholder="Write synopsis..."
-              value={metadata.description}
-              onChange={(e) =>
-                setMetadata((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-sm text-zinc-200 outline-none transition focus:border-indigo-500"
-            />
+              {/* Character Counter */}
+              <span className="font-mono text-[11px] text-muted-foreground">
+                {metadata.description?.length || 0} karakter
+              </span>
+            </div>
+
+            {/* Textarea Input */}
+            <div className="relative flex flex-1 flex-col">
+              <textarea
+                rows={16}
+                placeholder="Tuliskan sinopsis atau deskripsi lengkap di sini..."
+                value={metadata.description}
+                onChange={(e) =>
+                  setMetadata((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                className="w-full flex-1 resize-none rounded-2xl border border-input bg-background p-4 text-xs font-normal text-foreground leading-relaxed transition-all placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
           </section>
         </div>
       </div>
@@ -600,7 +722,6 @@ export default function EditComicPage() {
       {fixModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-4 backdrop-blur-md">
           <div className="w-full max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 shadow-2xl">
-            {/* Header */}
             <div className="border-b border-zinc-800 px-6 py-4">
               <h2 className="text-lg font-bold text-white">
                 Fix {fixModal.field}
@@ -611,9 +732,7 @@ export default function EditComicPage() {
               </p>
             </div>
 
-            {/* Body */}
             <div className="space-y-5 p-6">
-              {/* Input */}
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
                   Raw Metadata
@@ -636,7 +755,6 @@ export default function EditComicPage() {
                 />
               </div>
 
-              {/* Preview */}
               <div>
                 <div className="mb-2">
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
@@ -652,7 +770,6 @@ export default function EditComicPage() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="flex gap-3 border-t border-zinc-800 p-5">
               <button
                 onClick={() => setFixModal({ ...fixModal, open: false })}
@@ -678,12 +795,10 @@ export default function EditComicPage() {
       {imageSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-4 backdrop-blur-md">
           <div className="flex h-200 w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 shadow-2xl">
-            {/* Header */}
             <div className="border-b border-zinc-800 p-4 text-center font-bold text-zinc-100">
               Adjust Cover Image
             </div>
 
-            {/* Cropper */}
             <div className="relative flex-1 bg-zinc-950">
               <Cropper
                 image={imageSrc}
@@ -717,7 +832,6 @@ export default function EditComicPage() {
                 />
               </div>
 
-              {/* Rotation */}
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-zinc-400">
                   Rotation
@@ -732,7 +846,6 @@ export default function EditComicPage() {
                 </button>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setImageSrc(null)}
@@ -752,6 +865,6 @@ export default function EditComicPage() {
           </div>
         </div>
       )}
-    </main>
+    </>
   );
 }

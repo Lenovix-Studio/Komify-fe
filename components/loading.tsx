@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Loader2, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,10 +33,8 @@ export function Loading({
           sizeMap[size].container,
         )}
       >
-        {/* Outer Glow Ring */}
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl animate-pulse" />
 
-        {/* Big Rotating Spinner */}
         <Loader2
           className={cn(
             "animate-spin text-primary stroke-[1.5]",
@@ -45,16 +42,14 @@ export function Loading({
           )}
         />
 
-        {/* Center Pulsing Icon */}
         <BookOpen
           className={cn(
-            "absolute text-primary/80 animate-pulse",
+            "absolute text-primary/75 animate-pulse",
             sizeMap[size].icon,
           )}
         />
       </div>
 
-      {/* Loading Text */}
       {text && (
         <p className="text-sm font-medium tracking-wide text-muted-foreground animate-pulse">
           {text}

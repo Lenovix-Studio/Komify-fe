@@ -54,16 +54,15 @@ export function Header({
   const finalRightContent = rightContent;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-md shadow-xs transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 gap-2 sm:gap-4">
-        {/* === LEFT CONTENT SLOT === */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {logo && (
             <Link
               href="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-80 shrink-0"
+              className="flex items-center gap-2.5 transition-opacity hover:opacity-85 shrink-0"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
                 <BookOpenText className="h-5 w-5" />
               </div>
               <span className="text-lg font-bold tracking-tight text-foreground hidden sm:inline-block">
@@ -74,7 +73,6 @@ export function Header({
           {leftContent}
         </div>
 
-        {/* === CENTER CONTENT SLOT === */}
         <div className="flex items-center justify-center flex-1 max-w-md mx-2">
           {centerContent ? (
             centerContent
@@ -103,7 +101,7 @@ export function Header({
                     value={internalSearch}
                     onChange={handleInputChange}
                     placeholder="Search comics..."
-                    className="pl-9 pr-9 h-10 rounded-xl bg-muted/50 border-border/60 focus-visible:bg-background transition-all"
+                    className="pl-9 pr-9 h-10 rounded-xl bg-card border-border/80 focus-visible:bg-background focus-visible:ring-primary/30 shadow-xs transition-all placeholder:text-muted-foreground/70"
                   />
                   {internalSearch && (
                     <Button
@@ -111,7 +109,7 @@ export function Header({
                       variant="ghost"
                       size="icon"
                       onClick={handleClear}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-lg"
                       title="Clear search"
                     >
                       <X className="h-4 w-4" />
@@ -123,7 +121,6 @@ export function Header({
           ) : null}
         </div>
 
-        {/* === RIGHT CONTENT SLOT === */}
         <div className="flex items-center gap-2 shrink-0">
           <nav className="flex items-center gap-2">{finalRightContent}</nav>
         </div>

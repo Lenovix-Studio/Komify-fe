@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -46,76 +46,81 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
 
   return (
     <TooltipProvider delay={300}>
-      <Link href={`/comic/${comicId}`} className="group block cursor-pointer">
-        <Card className="overflow-hidden border-border/60 bg-card/50 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-lg group-hover:shadow-primary/10">
-          <CardContent className="p-0">
-            <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-              {coverUrl ? (
-                <img
-                  src={coverUrl}
-                  alt={comic.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-muted text-xs text-muted-foreground">
-                  No Cover
+      <Link
+        href={`/comic/${comicId}`}
+        className="group block h-full cursor-pointer"
+      >
+        <Card className="flex h-full flex-col overflow-hidden border-border/80 bg-card p-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/60 group-hover:shadow-md">
+          <div className="relative aspect-2/3 w-full shrink-0 overflow-hidden bg-muted/40 leading-none">
+            {coverUrl ? (
+              <img
+                src={coverUrl}
+                alt={comic.title}
+                loading="lazy"
+                className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted/40 text-xs font-medium text-muted-foreground">
+                No Cover
+              </div>
+            )}
+
+            <div className="absolute left-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <Badge
+                className={cn(
+                  "text-[10px] font-semibold uppercase tracking-wider shadow-xs",
+                  statusStyles[statusName] ||
+                    "bg-secondary text-secondary-foreground border-border/40",
+                )}
+              >
+                {statusName}
+              </Badge>
+            </div>
+
+            {typeof comic.rating_score === "number" &&
+              comic.rating_score > 0 && (
+                <div className="absolute right-2 top-2 z-10">
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1 border border-black/10 bg-black/65 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-md shadow-xs"
+                  >
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    <span>{comic.rating_score.toFixed(1)}</span>
+                  </Badge>
                 </div>
               )}
 
-              <div className="absolute left-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <Badge
-                  className={cn(
-                    "text-[10px] font-semibold uppercase tracking-wider shadow-sm",
-                    statusStyles[statusName] ||
-                      "bg-secondary text-secondary-foreground",
-                  )}
-                >
-                  {statusName}
-                </Badge>
-              </div>
-
-              {typeof comic.rating_score === "number" &&
-                comic.rating_score > 0 && (
-                  <div className="absolute right-2 top-2 z-10">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 border border-border/40 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-md"
-                    >
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span>{comic.rating_score.toFixed(1)}</span>
-                    </Badge>
-                  </div>
-                )}
-
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-semibold text-foreground">
-                    {comic.total_chapters ?? 0} Chapters
+            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-white">
+                  {comic.total_chapters ?? 0} Chapters
+                </span>
+                {comic.published_at && (
+                  <span className="text-[10px] text-zinc-300">
+                    Updated {new Date(comic.published_at).toLocaleDateString()}
                   </span>
-                  {comic.published_at && (
-                    <span className="text-[10px] text-muted-foreground">
-                      Updated{" "}
-                      {new Date(comic.published_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
+          </div>
 
-            <div className="p-3">
-              <Tooltip>
-                <TooltipTrigger>
-                  <h3 className="line-clamp-2 text-sm font-medium leading-5 text-card-foreground transition-colors group-hover:text-primary">
-                    {comic.title}
-                  </h3>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[260px]">
-                  <p className="text-xs font-normal">{comic.title}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </CardContent>
+          <div className="flex h-12 w-full items-center px-3 py-2">
+            <Tooltip>
+              <TooltipTrigger className="w-full text-left">
+                <h3 className="line-clamp-2 text-xs font-semibold leading-tight text-foreground transition-colors group-hover:text-primary wrap-break-word [word-break:break-word]">
+                  {comic.title}
+                </h3>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="max-w-65 wrap-break-word"
+              >
+                <p className="text-xs font-normal wrap-break-word">
+                  {comic.title}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </Card>
       </Link>
     </TooltipProvider>
@@ -124,14 +129,11 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
 
 export function ComicCardSkeleton() {
   return (
-    <Card className="overflow-hidden border-border/40 bg-card/40">
-      <CardContent className="p-0">
-        <Skeleton className="aspect-[2/3] w-full rounded-none" />
-        <div className="space-y-2 p-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </CardContent>
+    <Card className="flex h-full flex-col overflow-hidden border-border/60 bg-card/60 p-0">
+      <Skeleton className="aspect-2/3 w-full shrink-0 rounded-none" />
+      <div className="flex h-12 items-center px-3 py-2">
+        <Skeleton className="h-7 w-full" />
+      </div>
     </Card>
   );
 }

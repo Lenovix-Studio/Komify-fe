@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Database,
   Folder,
-  HardDrive,
+  Loader2,
   ShieldAlert,
   Trash2,
 } from "lucide-react";
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
+  const [isClearingStorage, setIsClearingStorage] = useState(false);
+
   const handleResetDatabase = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to reset all database data?\n\nThis action cannot be undone.",
@@ -39,15 +41,44 @@ export default function SettingsPage() {
       alert("Database reset successfully.");
     } catch (error) {
       console.error(error);
-
       alert("Failed to reset database.");
     } finally {
       setIsResetting(false);
     }
   };
 
+  const handleClearStorage = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to clear the storage folder?\n\nAll uploaded assets will be permanently deleted.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsClearingStorage(true);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/system/clear-storage`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to clear storage");
+      }
+
+      alert("Storage folder cleared successfully.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to clear storage.");
+    } finally {
+      setIsClearingStorage(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <Header
         logo={false}
         showSearch={false}
@@ -57,7 +88,7 @@ export default function SettingsPage() {
             variant="outline"
             size="sm"
             asChild
-            className="gap-1.5 rounded-xl border-border/80 bg-background/50 hover:bg-accent"
+            className="gap-1.5 rounded-xl border-border/80 bg-card hover:bg-accent hover:text-foreground shadow-xs"
           >
             <Link href="/">
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -67,34 +98,32 @@ export default function SettingsPage() {
         }
       />
 
-      {/* Content */}
       <main className="mx-auto max-w-5xl px-6 py-10">
-        {/* Sections */}
+        <h1 className="mb-6 text-2xl font-bold tracking-tight">
+          System Settings
+        </h1>
+
         <div className="space-y-6">
-          {/* Database */}
-          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6 backdrop-blur-xl">
+          <section className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs transition-all">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              {/* Info */}
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <Database className="h-6 w-6" />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-lg font-bold text-foreground">
                     Reset Database
                   </h2>
 
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-zinc-500">
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     Delete all comic metadata, chapters, bookmarks, ratings, and
                     application data stored in PostgreSQL.
                   </p>
 
-                  {/* Warning */}
-                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-
-                    <p className="text-sm leading-6 text-red-200">
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
+                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                    <p className="text-xs sm:text-sm leading-normal text-destructive font-medium">
                       This action cannot be undone. All database records will be
                       permanently removed.
                     </p>
@@ -102,53 +131,48 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Action */}
-              <button
+              <Button
+                variant="destructive"
                 onClick={handleResetDatabase}
                 disabled={isResetting}
-                className="group flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-6 py-4 text-sm font-semibold text-red-300 transition hover:border-red-500/40 hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="gap-2 rounded-2xl px-6 py-5 text-sm font-semibold shadow-xs shrink-0 text-white"
               >
-                <Trash2
-                  className={`h-4 w-4 transition ${
-                    isResetting ? "animate-spin" : "group-hover:scale-110"
-                  }`}
-                />
-
+                {isResetting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
                 <span>
                   {isResetting ? "Resetting Database..." : "Reset Database"}
                 </span>
-              </button>
+              </Button>
             </div>
           </section>
 
-          {/* Storage */}
-          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-6 backdrop-blur-xl">
+          <section className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs transition-all">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              {/* Info */}
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                   <Folder className="h-6 w-6" />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-lg font-bold text-foreground">
                     Clear Storage Folder
                   </h2>
 
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-zinc-500">
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     Delete all uploaded comic files and chapter images stored
                     inside the{" "}
-                    <span className="font-semibold text-zinc-300">
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
                       /storage
-                    </span>{" "}
+                    </code>{" "}
                     directory.
                   </p>
 
-                  {/* Warning */}
-                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-
-                    <p className="text-sm leading-6 text-red-200">
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
+                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                    <p className="text-xs sm:text-sm leading-normal text-destructive font-medium">
                       All uploaded images and comic assets will be permanently
                       deleted from disk.
                     </p>
@@ -156,12 +180,21 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Action */}
-              <button className="group flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-6 py-4 text-sm font-semibold text-red-300 transition hover:border-red-500/40 hover:bg-red-500/20 hover:text-red-200">
-                <Trash2 className="h-4 w-4 transition group-hover:scale-110" />
-
-                <span>Clear Storage</span>
-              </button>
+              <Button
+                variant="destructive"
+                onClick={handleClearStorage}
+                disabled={isClearingStorage}
+                className="gap-2 rounded-2xl px-6 py-5 text-sm font-semibold shadow-xs shrink-0 text-white"
+              >
+                {isClearingStorage ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                <span>
+                  {isClearingStorage ? "Clearing Storage..." : "Clear Storage"}
+                </span>
+              </Button>
             </div>
           </section>
         </div>
