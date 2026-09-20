@@ -39,28 +39,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { getCroppedImg } from "@/lib/cropImage";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
-
-type Status = {
-  id: string;
-  name: string;
-};
-type Censorship = {
-  id: string;
-  name: string;
-};
-type Language = {
-  code: string;
-  name: string;
-};
-type Chapter = {
-  id: string;
-  main: number;
-  sub: number;
-  title: string;
-  censorship_id: string;
-  language: string;
-  pages: string[];
-};
+import {
+  Censorship,
+  Chapter,
+  Language,
+  Status,
+  TempPage,
+} from "@/types/uploadPage";
 
 export default function UploadPage() {
   const [statuses, setStatuses] = useState<Status[]>([]);
@@ -1535,11 +1520,6 @@ function SortableChapter({
 }
 
 // COMPONENT SORTABLE PAGE CARD
-type TempPage = {
-  id: string;
-  url: string;
-  name: string;
-};
 function SortablePageCard({
   file,
   idx,
