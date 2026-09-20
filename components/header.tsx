@@ -51,12 +51,11 @@ export function Header({
   };
 
   const hasDefaultCenter = showSearch || showRandom;
-  const finalRightContent = rightContent;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-md shadow-xs transition-colors">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 gap-2 sm:gap-4">
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 gap-4">
+        <div className="flex items-center gap-3 shrink-0 flex-1 justify-start">
           {logo && (
             <Link
               href="/"
@@ -73,7 +72,7 @@ export function Header({
           {leftContent}
         </div>
 
-        <div className="flex items-center justify-center flex-1 max-w-md mx-2">
+        <div className="flex items-center justify-center flex-1 max-w-md w-full">
           {centerContent ? (
             centerContent
           ) : hasDefaultCenter ? (
@@ -121,8 +120,8 @@ export function Header({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <nav className="flex items-center gap-2">{finalRightContent}</nav>
+        <div className="flex items-center gap-2 shrink-0 flex-1 justify-end">
+          <nav className="flex items-center gap-2">{rightContent}</nav>
         </div>
       </div>
     </header>
