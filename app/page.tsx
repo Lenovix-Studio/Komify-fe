@@ -4,7 +4,6 @@ import type { HomepageResponse } from "@/types/homePage";
 
 export const metadata: Metadata = {
   title: "Home | Komify",
-  description: "Jelajahi koleksi komik terbaru dan populer di Komify.",
 };
 
 interface PageProps {

@@ -51,11 +51,17 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+
+    // Pastikan type="button" hanya diterapkan jika elemen aslinya adalah <button>
+    // untuk menghindari konflik tipe atribut saat menggunakan `asChild`
+    const defaultProps = !asChild ? { type: props.type || "button" } : {};
+
     return (
       <Comp
         data-slot="button"
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        {...defaultProps}
         {...props}
       />
     );
