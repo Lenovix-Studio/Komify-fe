@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PaginationControl } from "@/components/pagination";
 import { ComicCard, ComicCardSkeleton } from "@/components/comic-card";
 import type { Comic, HomepageResponse } from "@/types/homePage";
+import { BACKEND_URL } from "@/lib/constant";
 
 const statusStyles: Record<string, string> = {
   Completed: "bg-emerald-500 text-white",
@@ -73,14 +74,12 @@ export default function Content({ initialData, initialParams }: ContentProps) {
     });
   };
 
-  // Live Auto-Update / Polling tanpa merusak UX loading utama
+  // Live Auto-Update
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
         const res = await fetch(
-          `${backendUrl}/comics?${searchParams.toString()}`,
+          `${BACKEND_URL}/comics?${searchParams.toString()}`,
           {
             cache: "no-store",
           },
@@ -104,9 +103,7 @@ export default function Content({ initialData, initialParams }: ContentProps) {
 
     setIsRandomLoading(true);
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-      const response = await fetch(`${backendUrl}/comics/random`);
+      const response = await fetch(`${BACKEND_URL}/comics/random`);
 
       if (!response.ok) throw new Error("Failed to fetch random comic");
 

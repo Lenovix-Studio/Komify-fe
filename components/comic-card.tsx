@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { BACKEND_URL } from "@/lib/constant";
 
 export interface Comic {
   id: string | number;
@@ -36,11 +37,7 @@ interface ComicCardProps {
 
 export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
   const comicId = comic.seo_slug || comic.id || comic.legacy_id;
-  const coverUrl = comic.cover_path
-    ? comic.cover_path.startsWith("http")
-      ? comic.cover_path
-      : `${process.env.NEXT_PUBLIC_BACKEND_URL}${comic.cover_path}`
-    : null;
+  const coverUrl = BACKEND_URL + comic.cover_path;
 
   const statusName = comic.status?.name || "Unknown";
 
