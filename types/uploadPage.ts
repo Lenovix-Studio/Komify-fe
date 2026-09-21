@@ -49,6 +49,12 @@ export type ActionResult = {
   message?: string;
 };
 
+export type OptionItem = {
+  id?: string;
+  code?: string;
+  name: string;
+};
+
 export const fields = [
   { key: "title", label: "Title", placeholder: "Comic Title", required: true },
   { key: "parodies", label: "Parodies", placeholder: "Solo Leveling, Naruto" },

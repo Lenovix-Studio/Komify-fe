@@ -6,31 +6,19 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Upload,
-  Image as ImageIcon,
-  BookOpen,
   Plus,
   FilePlus,
-  Trash2,
   Sparkles,
   Loader2,
-  RefreshCw,
-  GripVertical,
 } from "lucide-react";
 import {
-  DndContext,
-  closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
   KeyboardSensor,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { getCroppedImg } from "@/lib/cropImage";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -46,13 +34,11 @@ import { ExtractModal } from "./components/ExtractModal";
 import { FixModal } from "./components/FixModal";
 import { UploadPagesModal } from "./components/UploadPagesModal";
 import { ImageCropModal } from "./components/ImageCropModal";
-import { SortableChapter } from "./components/SortableChapter";
 import { publishComicAction, extractMetadataAction } from "./actions/actions";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -65,6 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChapterListSection } from "./components/ChapterListSection";
 
 type UploadPageClientProps = {
   statuses: Status[];
@@ -265,7 +252,7 @@ export default function UploadPageClient({
     authors: "",
     groups: "",
     tags: "",
-    status_id: statuses[0]?.id || "ongoing",
+    status_id: statuses[0]?.id,
   });
   const fixParagraph = useCallback((text: any) => {
     if (!text) return "";
@@ -637,171 +624,7 @@ export default function UploadPageClient({
           </div>
         }
         rightContent={
-          <Button
-            type="button"
-            size="sm"
-            onClick={handlePublish}
-            disabled={isPublishing}
-            className="gap-2 rounded-xl bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isPublishing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Upload className="h-3.5 w-3.5" />
-            )}
-            <span>{isPublishing ? "Publishing..." : "Publish Comic"}</span>
-          </Button>
-        }
-      />
-
-      {/* Content */}
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 pb-10 lg:grid-cols-[1fr_2fr_2fr] mt-6">
-        {/* ================= LEFT: COVER ================= */}
-        <Card className="h-fit rounded-3xl p-6 shadow-sm transition-all border-border/80">
-          {/* Header */}
-          <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <ImageIcon className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground leading-tight">
-                Cover
-              </h2>
-              <p className="text-[11px] text-muted-foreground">
-                Gambar sampul utama
-              </p>
-            </div>
-          </div>
-
-          {/* Input File Hidden */}
-          <input
-            type="file"
-            id="cover-upload"
-            accept="image/*"
-            onChange={handleCoverChange}
-            className="hidden"
-            onClick={(e) => {
-              (e.target as HTMLInputElement).value = "";
-            }}
-          />
-
-          {/* Preview / Dropzone Box */}
-          <div
-            onClick={(e) => {
-              if (coverImage) {
-                handleEditExisting(e);
-              } else {
-                document.getElementById("cover-upload")?.click();
-              }
-            }}
-            className="group relative block aspect-[2/3] w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
-          >
-            {coverImage ? (
-              <img
-                src={coverImage}
-                alt="Comic Cover"
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-muted-foreground">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-muted-foreground shadow-xs transition duration-300 group-hover:scale-110 group-hover:border-primary/40 group-hover:text-primary">
-                  <Upload className="h-5 w-5" />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-foreground">
-                    Upload Cover Image
-                  </p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    JPG, PNG atau WEBP • Click to browse
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 backdrop-blur-[2px] transition duration-200 group-hover:opacity-100">
-              <span className="flex items-center gap-1.5 rounded-xl border border-border bg-background/90 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {coverImage ? "Edit / Re-crop Image" : "Choose File"}
-              </span>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          {coverImage && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById("cover-upload")?.click()}
-                className="rounded-xl text-xs h-9"
-              >
-                Replace
-              </Button>
-
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setCoverImage(null)}
-                className="rounded-xl text-xs h-9 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 shadow-none"
-              >
-                Remove
-              </Button>
-            </div>
-          )}
-
-          {/* Status Section */}
-          <div className="mt-5 space-y-2 border-t border-border/60 pt-4">
-            <label className="block text-xs font-semibold text-foreground/80">
-              Publication Status <span className="text-destructive">*</span>
-            </label>
-
-            <Select
-              value={metadata.status_id || ""}
-              onValueChange={(value) =>
-                setMetadata((prev) => ({
-                  ...prev,
-                  status_id: value || "",
-                }))
-              }
-            >
-              <SelectTrigger className="w-full rounded-xl text-xs h-10 focus:ring-2 focus:ring-primary/20">
-                <SelectValue placeholder="Pilih status" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {statuses.map((status) => (
-                  <SelectItem
-                    key={status.id}
-                    value={status.id}
-                    className="text-xs rounded-lg"
-                  >
-                    {status.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </Card>
-
-        {/* ================= MIDDLE: METADATA ================= */}
-        <Card className="h-fit rounded-3xl p-6 shadow-sm transition-all border-border/80">
-          {/* Header */}
-          <div className="mb-5 flex items-center justify-between border-b border-border/60 pb-3.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <BookOpen className="h-4 w-4" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground leading-tight">
-                  Metadata
-                </h2>
-                <p className="text-[11px] text-muted-foreground">
-                  Kelola atribut & relasi karya
-                </p>
-              </div>
-            </div>
-
-            {/* Action Button Extract */}
+          <>
             <Button
               type="button"
               onClick={() => setShowExtractModal(true)}
@@ -810,370 +633,262 @@ export default function UploadPageClient({
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               Extract
             </Button>
-          </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className="gap-2 rounded-xl bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isPublishing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              <span>{isPublishing ? "Publishing..." : "Publish Comic"}</span>
+            </Button>
+          </>
+        }
+      />
 
-          {/* Fields List */}
-          <div className="space-y-4">
-            {fields
-              .filter((field) => {
-                if (activeTemplate === "manhwa" && field.label === "Groups")
-                  return false;
-                if (
-                  (activeTemplate === "doujinshi" ||
-                    activeTemplate === "manga") &&
-                  field.label === "Authors"
-                ) {
-                  return false;
+      <main className="mx-auto grid max-w-7xl grid-cols-4 px-6 pb-10 mt-6 gap-6.5">
+        {/* cover and status */}
+        <div className="col-span-1">
+          <Card className="rounded-3xl p-6 shadow-sm transition-all border-border/80 h-126">
+            <input
+              type="file"
+              id="cover-upload"
+              accept="image/*"
+              onChange={handleCoverChange}
+              className="hidden"
+              onClick={(e) => {
+                (e.target as HTMLInputElement).value = "";
+              }}
+            />
+
+            {/* Preview / Dropzone Box */}
+            <div
+              onClick={(e) => {
+                if (coverImage) {
+                  handleEditExisting(e);
+                } else {
+                  document.getElementById("cover-upload")?.click();
                 }
-                return true;
-              })
-              .map((field) => (
-                <div key={field.key} className="space-y-1.5">
-                  {/* Field Label & Top Action */}
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-foreground/80">
-                      {field.label}
-                      {field.required && (
-                        <span className="text-destructive">*</span>
-                      )}
-                    </Label>
-
-                    {field.key !== "title" && (
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          openFixModal(
-                            field.label,
-                            metadata[field.key as keyof typeof metadata],
-                          )
-                        }
-                        className="h-5 rounded-md bg-primary/10 px-2 py-0 text-[11px] font-medium text-primary hover:bg-primary/20 shadow-none border-none"
-                      >
-                        <Sparkles className="mr-1 h-3 w-3" /> Fix
-                      </Button>
-                    )}
+              }}
+              className="group relative block aspect-[2/3] w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
+            >
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt="Comic Cover"
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2.5 p-4 text-muted-foreground">
+                  <div className="text-center">
+                    <p className="text-xs font-semibold text-foreground">
+                      Upload Cover Image
+                    </p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      JPG, PNG atau WEBP • Click to browse
+                    </p>
                   </div>
+                </div>
+              )}
 
-                  {/* Input Control */}
-                  <Input
-                    type="text"
-                    value={metadata[field.key as keyof typeof metadata]}
-                    onChange={(e) =>
-                      setMetadata((prev) => ({
-                        ...prev,
-                        [field.key]: e.target.value,
-                      }))
-                    }
-                    placeholder={field.placeholder}
-                    className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary focus-visible:outline-none"
-                  />
-                </div>
-              ))}
-          </div>
-        </Card>
-
-        {/* ================= RIGHT: CHAPTERS ================= */}
-        <section className="h-fit">
-          <Card className="rounded-3xl border border-border/80 bg-card shadow-sm">
-            {/* Header */}
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <FilePlus className="h-4 w-4" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-bold">Chapters</CardTitle>
-                  <CardDescription className="text-xs">
-                    Manage comic chapters and pages
-                  </CardDescription>
-                </div>
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 backdrop-blur-[2px] transition duration-200 group-hover:opacity-100">
+                <span className="flex items-center gap-1.5 rounded-xl border border-border bg-background/90 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {coverImage ? "Edit / Re-crop Image" : "Choose File"}
+                </span>
               </div>
-              <Button
-                type="button"
-                onClick={addChapter}
-                size="sm"
-                className="gap-2 rounded-xl"
-              >
-                <Plus className="h-4 w-4" /> Add Chapter
-              </Button>
-            </CardHeader>
-            {/* Chapter Items */}
-            <CardContent className="p-6 pt-0">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={sortedChapters.map((c) => c.id)}
-                  strategy={verticalListSortingStrategy}
+            </div>
+
+            {/* Footer Actions */}
+            {coverImage && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    document.getElementById("cover-upload")?.click()
+                  }
+                  className="rounded-xl text-xs h-9"
                 >
-                  <div className="space-y-4">
-                    {sortedChapters.map((chapter) => (
-                      <SortableChapter key={chapter.id} chapter={chapter}>
-                        {({ dragHandleProps }: any) => (
-                          <Card className="rounded-2xl border border-border/80 bg-background shadow-sm transition-shadow hover:shadow-md">
-                            <CardContent className="p-4">
-                              {/* Header Row */}
-                              <div className="mb-4 flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-3">
-                                  {/* Drag Handle */}
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    {...dragHandleProps}
-                                    className="h-9 w-9 cursor-grab rounded-xl text-muted-foreground hover:text-primary active:cursor-grabbing"
-                                  >
-                                    <GripVertical className="h-4 w-4" />
-                                    <span className="sr-only">
-                                      Drag chapter
-                                    </span>
-                                  </Button>
-                                  {/* Chapter Number */}
-                                  <div className="flex items-center gap-2">
-                                    <Label className="text-xs font-medium text-muted-foreground">
-                                      Chapter
-                                    </Label>
-                                    <div className="flex items-center gap-1.5">
-                                      <Input
-                                        type="number"
-                                        value={chapter.main}
-                                        onChange={(e) =>
-                                          updateChapter(
-                                            chapter.id,
-                                            "main",
-                                            Number(e.target.value),
-                                          )
-                                        }
-                                        className="h-9 w-14 rounded-xl bg-muted/40 px-2 text-center text-sm font-semibold text-primary"
-                                      />
-                                      <span className="font-bold text-muted-foreground">
-                                        .
-                                      </span>
-                                      <Input
-                                        type="number"
-                                        value={chapter.sub}
-                                        onChange={(e) =>
-                                          updateChapter(
-                                            chapter.id,
-                                            "sub",
-                                            Number(e.target.value),
-                                          )
-                                        }
-                                        className="h-9 w-14 rounded-xl bg-muted/40 px-2 text-center text-sm font-semibold text-primary"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                                {/* Delete */}
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeChapter(chapter.id)}
-                                  className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">
-                                    Remove chapter
-                                  </span>
-                                </Button>
-                              </div>
-                              {/* Content Grid */}
-                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-                                {/* Chapter Title */}
-                                <div className="space-y-1.5 sm:col-span-2 md:col-span-2">
-                                  <Label className="text-xs font-medium">
-                                    Chapter Title
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    placeholder="Chapter Title"
-                                    value={chapter.title}
-                                    onChange={(e) =>
-                                      updateChapter(
-                                        chapter.id,
-                                        "title",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="h-10 rounded-xl bg-muted/30"
-                                  />
-                                </div>
-                                {/* Censorship */}
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium">
-                                    Censorship
-                                  </Label>
-                                  <Select
-                                    value={chapter.censorship_id || ""}
-                                    onValueChange={(value) =>
-                                      updateChapter(
-                                        chapter.id,
-                                        "censorship_id",
-                                        value || "",
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="h-10 w-full rounded-xl bg-muted/30">
-                                      <SelectValue placeholder="Select censorship" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {censorships.map((censorship) => (
-                                        <SelectItem
-                                          key={censorship.id}
-                                          value={censorship.id}
-                                        >
-                                          {censorship.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                {/* Language */}
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-medium">
-                                    Language
-                                  </Label>
-                                  <Select
-                                    value={chapter.language || ""}
-                                    onValueChange={(value) =>
-                                      updateChapter(
-                                        chapter.id,
-                                        "language",
-                                        value || "",
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="h-10 w-full rounded-xl bg-muted/30">
-                                      <SelectValue placeholder="Select language" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {languages.map((language) => (
-                                        <SelectItem
-                                          key={language.code}
-                                          value={language.code}
-                                        >
-                                          {language.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                {/* Upload Section */}
-                                {chapter.pages.length === 0 ? (
-                                  <label
-                                    htmlFor={`input-file-chapter-${chapter.id}`}
-                                    className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary sm:col-span-2 md:col-span-4"
-                                  >
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-primary/30 group-hover:text-primary">
-                                      <Upload className="h-4 w-4" />
-                                    </div>
-                                    <div className="text-center">
-                                      <span className="block text-xs font-semibold text-foreground">
-                                        Upload Chapter Pages
-                                      </span>
-                                      <span className="text-[10px] text-muted-foreground">
-                                        JPG, PNG or PDF • Click to browse
-                                      </span>
-                                    </div>
-                                    <input
-                                      type="file"
-                                      id={`input-file-chapter-${chapter.id}`}
-                                      accept="image/*,.pdf"
-                                      className="hidden"
-                                      multiple
-                                      onChange={(e) =>
-                                        handlePagesChange(e, chapter.id)
-                                      }
-                                      onClick={(e) => {
-                                        (e.target as HTMLInputElement).value =
-                                          "";
-                                      }}
-                                    />
-                                  </label>
-                                ) : (
-                                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 sm:col-span-2 md:col-span-4">
-                                    {/* Loaded Information */}
-                                    <div className="flex min-w-0 items-center gap-2.5">
-                                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-background text-primary shadow-sm">
-                                        <ImageIcon className="h-4 w-4" />
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="truncate text-xs font-bold text-foreground">
-                                          Pages Loaded Successfully
-                                        </p>
-                                        <p className="text-[10px] font-medium text-primary">
-                                          {chapter.pages.length}
-                                          {chapter.pages.length === 1
-                                            ? "image"
-                                            : "images"}
-                                          ready
-                                        </p>
-                                      </div>
-                                    </div>
-                                    {/* Actions */}
-                                    <div className="flex shrink-0 items-center gap-1.5">
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleOpenPreview(
-                                            chapter.id,
-                                            chapter.pages,
-                                          )
-                                        }
-                                        className="h-9 rounded-xl px-3 text-xs"
-                                      >
-                                        Manage
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon"
-                                        asChild
-                                        className="h-9 w-9 rounded-xl"
-                                      >
-                                        <label
-                                          htmlFor={`replace-file-chapter-${chapter.id}`}
-                                          className="cursor-pointer"
-                                          title="Replace all files"
-                                        >
-                                          <RefreshCw className="h-3.5 w-3.5" />
-                                          <input
-                                            type="file"
-                                            id={`replace-file-chapter-${chapter.id}`}
-                                            accept="image/*,.pdf"
-                                            className="hidden"
-                                            multiple
-                                            onChange={(e) =>
-                                              handlePagesChange(e, chapter.id)
-                                            }
-                                            onClick={(e) => {
-                                              (
-                                                e.target as HTMLInputElement
-                                              ).value = "";
-                                            }}
-                                          />
-                                        </label>
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </SortableChapter>
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </CardContent>
+                  Replace
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setCoverImage(null)}
+                  className="rounded-xl text-xs h-9 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 shadow-none"
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
+
+            {/* Status Section */}
+            <div className="mt-5 space-y-2 border-t border-border/60 pt-4">
+              <label className="block text-xs font-semibold text-foreground/80">
+                Publication Status <span className="text-destructive">*</span>
+              </label>
+
+              <Select
+                value={
+                  metadata.status_id
+                    ? String(metadata.status_id).trim().toLowerCase()
+                    : ""
+                }
+                onValueChange={(value) =>
+                  setMetadata((prev) => ({
+                    ...prev,
+                    status_id: value || "",
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full rounded-xl text-xs h-10 focus:ring-2 focus:ring-primary/20">
+                  <SelectValue>
+                    {statuses.find(
+                      (s) =>
+                        String(s.id).trim().toLowerCase() ===
+                        String(metadata.status_id).trim().toLowerCase(),
+                    )?.name || "Pilih status"}
+                  </SelectValue>
+                </SelectTrigger>
+
+                <SelectContent
+                  className="rounded-xl"
+                  alignItemWithTrigger={false}
+                >
+                  {statuses.map((status) => (
+                    <SelectItem
+                      key={status.id}
+                      value={String(status.id).trim().toLowerCase()}
+                      className="text-xs rounded-lg"
+                    >
+                      {status.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </Card>
-        </section>
+        </div>
+
+        <div className="col-span-3">
+          <Card className="h-fit rounded-3xl p-6 shadow-sm transition-all border-border/80">
+            <div className="space-y-4">
+              {fields
+                .filter((field) => {
+                  if (activeTemplate === "manhwa" && field.label === "Groups")
+                    return false;
+                  if (
+                    (activeTemplate === "doujinshi" ||
+                      activeTemplate === "manga") &&
+                    field.label === "Authors"
+                  ) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((field) => (
+                  <div key={field.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-foreground/80">
+                        {field.label}
+                        {field.required && (
+                          <span className="text-destructive">*</span>
+                        )}
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={String(
+                          metadata[field.key as keyof typeof metadata] || "",
+                        )}
+                        onChange={(e) =>
+                          setMetadata((prev) => ({
+                            ...prev,
+                            [field.key as keyof typeof metadata]:
+                              e.target.value,
+                          }))
+                        }
+                        placeholder={field.placeholder}
+                        className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary focus-visible:outline-none"
+                      />
+
+                      {field.key !== "title" && (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const rawValue =
+                              metadata[field.key as keyof typeof metadata];
+                            const safeValue =
+                              rawValue !== null && rawValue !== undefined
+                                ? String(rawValue)
+                                : "";
+
+                            openFixModal(field.label, safeValue);
+                          }}
+                          className="p-5 gap-1 rounded-lg bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 shadow-none border-none shrink-0"
+                        >
+                          <Sparkles className="size-3.5 shrink-0" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="col-span-full">
+          <section className="h-fit">
+            <Card className="rounded-3xl border border-border/80 bg-card shadow-sm">
+              {/* Header */}
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FilePlus className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold">
+                      Chapters
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Manage comic chapters and pages
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  onClick={addChapter}
+                  size="sm"
+                  className="gap-2 rounded-xl"
+                >
+                  <Plus className="h-4 w-4" /> Add Chapter
+                </Button>
+              </CardHeader>
+              {/* Chapter Items */}
+              <ChapterListSection
+                sensors={sensors}
+                sortedChapters={sortedChapters}
+                censorships={censorships}
+                languages={languages}
+                handleDragEnd={handleDragEnd}
+                updateChapter={updateChapter}
+                removeChapter={removeChapter}
+                handlePagesChange={handlePagesChange}
+                handleOpenPreview={handleOpenPreview}
+              />
+            </Card>
+          </section>
+        </div>
       </main>
 
       {/* Extract Modal */}
