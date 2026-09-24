@@ -212,8 +212,8 @@ export default function Content({ initialData, initialParams }: ContentProps) {
           ) : null}
 
           {!loading && !isPending && comics.length === 0 && (
-            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card p-12 text-center shadow-xs">
-              <div className="mb-3 rounded-full bg-accent/60 p-4">
+            <div className="flex h-full flex-col items-center justify-center rounded-2xl p-12 text-center shadow-xs">
+              <div className="mb-3 rounded-full bg-white p-4">
                 <svg
                   className="h-8 w-8 text-muted-foreground/80"
                   fill="none"
