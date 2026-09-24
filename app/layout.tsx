@@ -40,6 +40,7 @@ export default function RootLayout({
     <html
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">

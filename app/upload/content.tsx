@@ -675,7 +675,7 @@ export default function UploadPageClient({
                   document.getElementById("cover-upload")?.click();
                 }
               }}
-              className="group relative block aspect-[2/3] w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
+              className="group relative block aspect-2/3 w-full cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-border/80 bg-muted/30 transition-all hover:border-primary/50 hover:bg-muted/50"
             >
               {coverImage ? (
                 <img
