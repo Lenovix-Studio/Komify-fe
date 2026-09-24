@@ -10,6 +10,7 @@ import { PaginationControl } from "@/components/pagination";
 import { ComicCard, ComicCardSkeleton } from "@/components/comic-card";
 import type { Comic, HomepageResponse } from "@/types/homePage";
 import { BACKEND_URL } from "@/lib/constant";
+import { toast } from "sonner";
 
 const statusStyles: Record<string, string> = {
   Completed: "bg-emerald-500 text-white",
@@ -26,8 +27,8 @@ interface ContentProps {
 export default function Content({ initialData, initialParams }: ContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
+  const [isPending, startTransition] = useTransition();
   const [comics, setComics] = useState<Comic[]>(initialData.data);
   const [pagination, setPagination] = useState(initialData.pagination);
   const [loading, setLoading] = useState(false);
@@ -85,13 +86,21 @@ export default function Content({ initialData, initialParams }: ContentProps) {
           },
         );
 
-        if (res.ok) {
-          const result: HomepageResponse = await res.json();
-          setComics(result.data);
-          setPagination(result.pagination);
-        }
+        if (!res.ok) throw new Error("Server error");
+
+        const result: HomepageResponse = await res.json();
+        setComics(result.data);
+        setPagination(result.pagination);
+
+        toast.dismiss("auto-update-error");
       } catch (error) {
         console.error("Failed to auto-update comics:", error);
+
+        toast.error("Gagal memperbarui data", {
+          id: "auto-update-error",
+          description:
+            "Gagal terhubung ke server untuk memperbarui daftar komik.",
+        });
       }
     }, 5000);
 
@@ -99,7 +108,12 @@ export default function Content({ initialData, initialParams }: ContentProps) {
   }, [searchParams]);
 
   const handleRandomComic = async () => {
-    if (isRandomLoading) return;
+    if (isRandomLoading) {
+      toast.info("Please wait", {
+        description: "Looking for another random comic...",
+      });
+      return;
+    }
 
     setIsRandomLoading(true);
     try {
@@ -112,10 +126,15 @@ export default function Content({ initialData, initialParams }: ContentProps) {
 
       if (targetSlug) {
         router.push(`/comic/${targetSlug}`);
+      } else {
+        throw new Error("Comic data is incomplete");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Gagal memuat komik acak");
+
+      toast.error("Gagal memuat komik acak", {
+        description: error.message || "Terjadi kesalahan pada server.",
+      });
     } finally {
       setIsRandomLoading(false);
     }
