@@ -2,6 +2,10 @@ import { BACKEND_URL } from "@/lib/constant";
 import { BookmarkItem } from "@/types/bookmarkPage";
 import { BookmarkView } from "./bookmark-view";
 
+export const metadata = {
+  title: "Bookmarks",
+};
+
 async function getBookmarks(): Promise<BookmarkItem[]> {
   try {
     const res = await fetch(`${BACKEND_URL}/bookmarks`, {
