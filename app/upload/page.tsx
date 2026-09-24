@@ -1,8 +1,7 @@
 import { Status, Censorship, Language } from "@/types/uploadPage";
 import UploadPageClient from "./content";
 import { Metadata } from "next";
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:4000";
+import { BACKEND_URL } from "@/lib/constant";
 
 export const metadata: Metadata = {
   title: "Upload",
