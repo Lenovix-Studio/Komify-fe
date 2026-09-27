@@ -8,10 +8,11 @@ export type Comic = {
   total_chapters: number;
   rating_score: number;
   rating_count: number;
-  status: {
-    id: string;
-    name: string;
-  };
+  is_bookmarked?: boolean;
+  status?: {
+    id?: string;
+    name?: string;
+  } | null;
 };
 
 export type HomepageResponse = {

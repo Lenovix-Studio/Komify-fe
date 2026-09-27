@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, Bookmark } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,22 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { BACKEND_URL } from "@/lib/constant";
-
-export interface Comic {
-  id: string | number;
-  title: string;
-  seo_slug?: string | null;
-  legacy_id?: number;
-  cover_path?: string | null;
-  published_at?: string | null;
-  total_chapters?: number;
-  rating_score?: number;
-  rating_count?: number;
-  status?: {
-    id?: string;
-    name?: string;
-  } | null;
-}
+import { Comic } from "@/types/homePage";
 
 interface ComicCardProps {
   comic: Comic;
@@ -37,7 +22,9 @@ interface ComicCardProps {
 
 export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
   const comicId = comic.seo_slug || comic.id || comic.legacy_id;
-  const coverUrl = BACKEND_URL + comic.cover_path;
+  const coverUrl = comic.cover_path
+    ? `${BACKEND_URL || ""}${comic.cover_path}`
+    : null;
 
   const statusName = comic.status?.name || "Unknown";
 
@@ -48,13 +35,13 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
         className="group block h-full cursor-pointer"
       >
         <Card className="flex h-full flex-col overflow-hidden border-border/80 bg-card p-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/60 group-hover:shadow-md">
-          <div className="relative aspect-2/3 w-full shrink-0 overflow-hidden bg-muted/40 leading-none">
+          <div className="relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-muted/40 leading-none h-64 sm:h-72">
             {coverUrl ? (
               <img
                 src={coverUrl}
                 alt={comic.title}
                 loading="lazy"
-                className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="block h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-muted/40 text-xs font-medium text-muted-foreground">
@@ -62,7 +49,7 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
               </div>
             )}
 
-            <div className="absolute left-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="absolute left-2 top-2 z-10 flex flex-col gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Badge
                 className={cn(
                   "text-[10px] font-semibold uppercase tracking-wider shadow-xs",
@@ -72,6 +59,12 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
               >
                 {statusName}
               </Badge>
+              {comic.is_bookmarked && (
+                <Badge className="bg-primary text-white w-fit px-1.5 py-0.5">
+                  <Bookmark className="w-3 h-3 mr-1 fill-white" />
+                  Saved
+                </Badge>
+              )}
             </div>
 
             {typeof comic.rating_score === "number" &&
@@ -94,14 +87,15 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
                 </span>
                 {comic.published_at && (
                   <span className="text-[10px] text-zinc-300">
-                    Updated {new Date(comic.published_at).toLocaleDateString()}
+                    Updated{" "}
+                    {new Date(comic.published_at).toLocaleDateString("en-GB")}
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex h-12 w-full items-center px-3 py-2">
+          <div className="flex flex-1 w-full items-center px-3 py-2">
             <Tooltip>
               <TooltipTrigger className="w-full text-left">
                 <h3 className="line-clamp-2 text-xs font-semibold leading-tight text-foreground transition-colors group-hover:text-primary wrap-break-word [word-break:break-word]">
@@ -126,10 +120,11 @@ export function ComicCard({ comic, statusStyles = {} }: ComicCardProps) {
 
 export function ComicCardSkeleton() {
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-border/60 bg-card/60 p-0">
-      <Skeleton className="aspect-2/3 w-full shrink-0 rounded-none" />
-      <div className="flex h-12 items-center px-3 py-2">
-        <Skeleton className="h-7 w-full" />
+    <Card className="flex h-full flex-col overflow-hidden border-border/80 bg-card p-0 shadow-sm">
+      <Skeleton className="h-64 sm:h-72 w-full rounded-none" />
+      <div className="p-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-2/3" />
       </div>
     </Card>
   );

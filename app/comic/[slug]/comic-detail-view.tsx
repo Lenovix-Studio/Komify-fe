@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   DndContext,
   PointerSensor,
@@ -17,7 +28,6 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import {
-  Star,
   Clock3,
   BookmarkPlus,
   Bookmark,
@@ -39,6 +49,7 @@ import { BACKEND_URL } from "@/lib/constant";
 import { ComicChapter, ComicMetadata } from "@/types/detailPage";
 import { MetadataRow } from "@/components/MetadataRow";
 import { SortableChapterCard } from "@/components/SortableChapterCard";
+import { RatingWidget } from "@/components/RatingWidget";
 import { ThumbnailModal } from "@/components/ThumbnailModal";
 
 const statusPremiumStyles: Record<string, string> = {
@@ -77,7 +88,6 @@ export function ComicDetailView({
 }: ComicDetailViewProps) {
   const router = useRouter();
 
-  // State
   const [comic] = useState<ComicMetadata>(initialComic);
   const [chapters, setChapters] = useState<ComicChapter[]>(initialChapters);
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,7 +140,7 @@ export function ComicDetailView({
     } catch (error) {
       console.error(error);
       setBookmarked(previousState);
-      alert("Failed to update bookmark");
+      toast.error("Failed to update bookmark");
     } finally {
       setBookmarkLoading(false);
     }
@@ -195,12 +205,6 @@ export function ComicDetailView({
   const handleDeleteComic = async () => {
     if (!comic?.id) return;
 
-    const confirmed = window.confirm(
-      `Delete comic "${comic.title}"?\n\nThis will permanently delete:\n- Comic metadata\n- All chapters\n- All pages\n- All images`,
-    );
-
-    if (!confirmed) return;
-
     try {
       setDeletingComic(true);
       const response = await fetch(`${BACKEND_URL}/comics/${comic.id}`, {
@@ -210,13 +214,15 @@ export function ComicDetailView({
       if (!response.ok) {
         throw new Error(result.message || "Failed to delete comic");
       }
-      alert(
+      toast.success(
         `Comic deleted successfully.\n\nDeleted chapters: ${result.deleted_chapters}\nDeleted pages: ${result.deleted_pages}`,
       );
       router.push("/");
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Failed to delete comic");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete comic",
+      );
     } finally {
       setDeletingComic(false);
     }
@@ -239,7 +245,7 @@ export function ComicDetailView({
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to load random comic");
+      toast.error("Failed to load random comic");
     } finally {
       setIsRandomLoading(false);
     }
@@ -295,18 +301,40 @@ export function ComicDetailView({
                 </Link>
               </Button>
 
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteComic}
-                disabled={deletingComic}
-                className="gap-2 rounded-xl text-xs font-medium transition-transform hover:scale-105 text-white"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {deletingComic ? "Deleting..." : "Delete"}
-                </span>
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  disabled={deletingComic}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs font-medium transition-transform hover:scale-105 text-white disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-red-500 hover:bg-red-500/90 h-8 px-3"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {deletingComic ? "Deleting..." : "Delete"}
+                  </span>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-red-400">
+                      Delete Comic
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-zinc-400">
+                      Are you sure you want to delete comic &quot;{comic?.title}
+                      &quot;? This will permanently delete the comic metadata,
+                      all chapters, pages, and images.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteComic}
+                      className="bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           }
         />
@@ -321,18 +349,19 @@ export function ComicDetailView({
               <div className="relative">
                 <div className="absolute inset-0 scale-95 rounded-4xl bg-primary/10 blur-2xl" />
                 <div className="relative overflow-hidden rounded-4xl border border-border/80 bg-card shadow-sm">
-                  <div className="relative aspect-2/3 w-full overflow-hidden bg-muted/40">
+                  <div
+                    className="relative w-full overflow-hidden bg-muted/40 flex items-center justify-center"
+                    style={{ minHeight: "300px" }}
+                  >
                     {comic.cover_path ? (
-                      <Image
+                      <img
                         src={`${BACKEND_URL}${comic.cover_path}`}
                         alt={comic.title}
-                        fill
                         loading="eager"
-                        className="object-cover"
-                        unoptimized
+                        className="w-full h-auto object-contain max-h-[600px]"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-muted/40 text-xs font-medium text-muted-foreground">
+                      <div className="flex h-full w-full items-center justify-center text-xs font-medium text-muted-foreground">
                         No Cover
                       </div>
                     )}
@@ -387,29 +416,6 @@ export function ComicDetailView({
                         : "Add Bookmark"}
                   </span>
                 </button>
-
-                <div className="rounded-3xl border border-amber-500/20 bg-amber-500/5 p-4 backdrop-blur-xs">
-                  <div className="flex items-center justify-center gap-2">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <button
-                        key={index}
-                        className="group transition hover:scale-115"
-                      >
-                        <Star
-                          className={`h-7 w-7 transition ${
-                            index < 4
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-amber-500/25"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="mt-3 text-center text-[11px] text-muted-foreground/80">
-                    Tap a star to rate this comic
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -456,6 +462,14 @@ export function ComicDetailView({
                   {comic.alternative_title}
                 </p>
               )}
+
+              <div className="mt-4">
+                <RatingWidget
+                  comicId={comic.id}
+                  initialScore={comic.rating_score || 0}
+                  initialCount={comic.rating_count || 0}
+                />
+              </div>
 
               {/* Metadata List Container */}
               <div className="mt-5 rounded-2xl border border-border/80 bg-card/60 shadow-xs">
@@ -509,7 +523,7 @@ export function ComicDetailView({
                     Created:{" "}
                     <strong className="font-semibold text-foreground">
                       {comic.created_at
-                        ? new Date(comic.created_at).toLocaleDateString()
+                        ? new Date(comic.created_at).toLocaleDateString("en-GB")
                         : "Unknown"}
                     </strong>
                   </span>
@@ -521,7 +535,7 @@ export function ComicDetailView({
                     Updated:{" "}
                     <strong className="font-semibold text-foreground">
                       {comic.updated_at
-                        ? new Date(comic.updated_at).toLocaleDateString()
+                        ? new Date(comic.updated_at).toLocaleDateString("en-GB")
                         : "Unknown"}
                     </strong>
                   </span>
@@ -608,6 +622,7 @@ export function ComicDetailView({
         </div>
 
         <DndContext
+          id="dnd-context"
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}

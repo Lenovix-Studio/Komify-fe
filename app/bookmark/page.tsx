@@ -2,6 +2,8 @@ import { BACKEND_URL } from "@/lib/constant";
 import { BookmarkItem } from "@/types/bookmarkPage";
 import { BookmarkView } from "./bookmark-view";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Bookmarks",
 };

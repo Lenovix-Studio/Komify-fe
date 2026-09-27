@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Status, Censorship, Language } from "@/types/uploadPage";
 import UploadPageClient from "./content";
 import { Metadata } from "next";
@@ -20,17 +22,34 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 export default async function UploadPage() {
-  const [statuses, censorships, languages] = await Promise.all([
-    fetchJson<Status[]>("/system/statuses"),
-    fetchJson<Censorship[]>("/system/censorships"),
-    fetchJson<Language[]>("/system/languages"),
-  ]);
+  const types = await fetchJson<any[]>("/common-code/types");
+  const details = await fetchJson<any[]>("/common-code/details");
+  const statusType = types.find((t) => t.code === "STATUS");
+  const censorshipType = types.find((t) => t.code === "CENSORSHIP");
+  const languageType = types.find((t) => t.code === "LANGUAGE");
+  const templatesType = types.find((t) => t.code === "TEMPLATE");
+
+  const statuses: Status[] = details
+    .filter((d) => d.type_id === statusType?.id && d.is_active)
+    .map((d) => ({ id: d.id, name: d.name }));
+
+  const censorships: Censorship[] = details
+    .filter((d) => d.type_id === censorshipType?.id && d.is_active)
+    .map((d) => ({ id: d.id, name: d.name }));
+
+  const languages: Language[] = details
+    .filter((d) => d.type_id === languageType?.id && d.is_active)
+    .map((d) => ({ code: d.code, name: d.name }));
+  const templates: Language[] = details
+    .filter((d) => d.type_id === templatesType?.id && d.is_active)
+    .map((d) => ({ code: d.code, name: d.name }));
 
   return (
     <UploadPageClient
       statuses={statuses}
       censorships={censorships}
       languages={languages}
+      templates={templates}
     />
   );
 }

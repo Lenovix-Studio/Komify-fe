@@ -103,7 +103,7 @@ export function SortableChapterCard({
               <span className="text-border">•</span>
               <span>
                 Released{" "}
-                {new Date(chapter.published_at).toLocaleDateString(undefined, {
+                {new Date(chapter.published_at).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",

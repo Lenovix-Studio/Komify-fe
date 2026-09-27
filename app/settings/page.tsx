@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Code2, Settings2 } from "lucide-react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CommonCodeTab } from "./common-code-tab";
 import { ResetSystemCard } from "./reset-system-card";
 
 export const metadata = {
@@ -34,9 +36,38 @@ export default function SettingsPage() {
       />
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <div className="space-y-6">
-          <ResetSystemCard />
-        </div>
+        <Tabs defaultValue="common-code" className="w-full space-y-6">
+          <TabsList className="inline-flex h-12 items-center justify-start rounded-2xl bg-muted/60 p-1.5 text-muted-foreground">
+            <TabsTrigger
+              value="common-code"
+              className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+            >
+              <Code2 className="h-4 w-4" />
+              <span>Common Code</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="other"
+              className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+            >
+              <Settings2 className="h-4 w-4" />
+              <span>Other</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="common-code"
+            className="focus-visible:outline-none"
+          >
+            <CommonCodeTab />
+          </TabsContent>
+
+          <TabsContent
+            value="other"
+            className="space-y-6 focus-visible:outline-none"
+          >
+            <ResetSystemCard />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

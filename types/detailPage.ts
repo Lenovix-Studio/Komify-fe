@@ -6,6 +6,8 @@ export type ComicMetadata = {
   legacy_id: number;
   cover_path: string | null;
   total_chapters: number;
+  rating_score: number;
+  rating_count: number;
 
   status: {
     id: string;

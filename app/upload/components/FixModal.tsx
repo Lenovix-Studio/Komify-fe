@@ -47,7 +47,7 @@ export function FixModal({
       open={modalData.open}
       onOpenChange={(open) => !open && handleClose()}
     >
-      <DialogContent className="sm:max-w-2xl rounded-3xl border border-zinc-100 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.06)] gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl rounded-3xl border border-zinc-100 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.06)] gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <DialogHeader className="border-b border-zinc-100 px-6 py-5 text-left">
           <DialogTitle className="text-xl font-bold text-zinc-900 tracking-tight">
@@ -59,7 +59,7 @@ export function FixModal({
         </DialogHeader>
 
         {/* Content */}
-        <div className="space-y-5 p-6">
+        <div className="space-y-5 p-6 overflow-y-auto max-h-[60vh]">
           {/* Raw Input */}
           <div className="space-y-2">
             <Label

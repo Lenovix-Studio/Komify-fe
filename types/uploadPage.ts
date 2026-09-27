@@ -57,6 +57,11 @@ export type OptionItem = {
 
 export const fields = [
   { key: "title", label: "Title", placeholder: "Comic Title", required: true },
+  {
+    key: "alternative_title",
+    label: "Alternative Title",
+    placeholder: "Japanese / Korean Title",
+  },
   { key: "parodies", label: "Parodies", placeholder: "Solo Leveling, Naruto" },
   {
     key: "characters",

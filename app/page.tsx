@@ -1,6 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import Content from "./content";
 import type { HomepageResponse } from "@/types/homePage";
+import { BACKEND_URL } from "@/lib/constant";
 
 export const metadata: Metadata = {
   title: "Home | Komify",
@@ -35,11 +38,8 @@ async function getComics(
   if (!queryParams.has("page")) queryParams.set("page", "1");
   if (!queryParams.has("limit")) queryParams.set("limit", "12");
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-
   try {
-    const res = await fetch(`${backendUrl}/comics?${queryParams.toString()}`, {
+    const res = await fetch(`${BACKEND_URL}/comics?${queryParams.toString()}`, {
       cache: "no-store",
     });
 

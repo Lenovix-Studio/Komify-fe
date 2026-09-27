@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRef, useState, memo, useEffect } from "react";
+import { CSS } from "@dnd-kit/utilities";
 import {
   DndContext,
   PointerSensor,
@@ -17,7 +18,6 @@ import {
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   Save,
   Plus,
@@ -26,54 +26,18 @@ import {
   ImageIcon,
   BookOpen,
 } from "lucide-react";
-
-type ChapterPage = {
-  id: string;
-  page: number;
-  file: File;
-  previewUrl: string;
-};
-
-type Language = {
-  code: string;
-  name: string;
-};
-
-type Censorship = {
-  id: string;
-  name: string;
-};
-
-type ChapterListResponse = {
-  data: {
-    id: string;
-    title: string;
-    chapter_number: string;
-
-    language: {
-      code: string;
-      name: string;
-    };
-
-    censorship: {
-      id: string;
-      name: string;
-    };
-
-    total_pages: number;
-    published_at: string | null;
-  }[];
-
-  comic_id: string;
-  total_chapters: number;
-};
+import { BACKEND_URL } from "@/lib/constant";
+import {
+  ChapterPage,
+  Censorship,
+  ChapterListResponse,
+  Language,
+} from "@/types/chapterPage";
 
 export default function CreateChapterPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pages, setPages] = useState<ChapterPage[]>([]);
@@ -88,11 +52,11 @@ export default function CreateChapterPage() {
     const fetchInitialData = async () => {
       try {
         const [chaptersRes, languagesRes, censorshipsRes] = await Promise.all([
-          fetch(`${baseUrl}/comics/${slug}/chapters`, {
+          fetch(`${BACKEND_URL}/comics/${slug}/chapters`, {
             cache: "no-store",
           }),
-          fetch(`${baseUrl}/system/languages`),
-          fetch(`${baseUrl}/system/censorships`),
+          fetch(`${BACKEND_URL}/system/languages`),
+          fetch(`${BACKEND_URL}/system/censorships`),
         ]);
 
         if (!chaptersRes.ok || !languagesRes.ok || !censorshipsRes.ok) {
@@ -127,7 +91,7 @@ export default function CreateChapterPage() {
     if (slug) {
       fetchInitialData();
     }
-  }, [slug, baseUrl]);
+  }, [slug, BACKEND_URL]);
 
   /* ================= DND ================= */
   const sensors = useSensors(
@@ -209,7 +173,7 @@ export default function CreateChapterPage() {
         formData.append(page.id, page.file, page.file.name);
       });
 
-      const response = await fetch(`${baseUrl}/comics/${slug}/chapters`, {
+      const response = await fetch(`${BACKEND_URL}/comics/${slug}/chapters`, {
         method: "POST",
         body: formData,
       });
@@ -417,6 +381,7 @@ export default function CreateChapterPage() {
           ) : (
             <div className="p-5">
               <DndContext
+                id="dnd-chapter-create"
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}

@@ -4,6 +4,16 @@ import Link from "next/link";
 import { ArrowLeft, Bookmark, Clock3, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { PaginationControl } from "@/components/pagination";
@@ -18,6 +28,8 @@ interface BookmarkViewProps {
 export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(initialBookmarks);
   const [search, setSearch] = useState("");
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isClearAllOpen, setIsClearAllOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -44,10 +56,6 @@ export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
   };
 
   const clearAllBookmarks = async () => {
-    if (!confirm("Clear all bookmarks?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`${BACKEND_URL}/bookmarks`, {
         method: "DELETE",
@@ -129,7 +137,7 @@ export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
           <Button
             variant="destructive"
             size="sm"
-            onClick={clearAllBookmarks}
+            onClick={() => setIsClearAllOpen(true)}
             disabled={bookmarks.length === 0}
             className="gap-2 rounded-xl shadow-xs text-white"
           >
@@ -155,12 +163,12 @@ export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
                 href={`/comic/${item.comics.seo_slug ?? item.comics.id}`}
                 className="group relative overflow-hidden rounded-3xl border border-border/80 bg-card transition-all duration-200 hover:border-primary/40 hover:shadow-md"
               >
-                <div className="aspect-2/3 bg-muted/40 overflow-hidden">
+                <div className="relative flex w-full shrink-0 items-center justify-center bg-muted/40 overflow-hidden h-64 sm:h-72">
                   {item.comics.cover_path && (
                     <img
                       src={`${BACKEND_URL}${item.comics.cover_path}`}
                       alt={item.comics.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                     />
                   )}
                 </div>
@@ -172,7 +180,7 @@ export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
 
                   <p className="mt-1 flex items-center gap-1 text-xs text-white/80">
                     <Clock3 className="h-3 w-3" />
-                    {new Date(item.created_at).toLocaleDateString()}
+                    {new Date(item.created_at).toLocaleDateString("en-GB")}
                   </p>
                 </div>
 
@@ -205,6 +213,65 @@ export function BookmarkView({ initialBookmarks }: BookmarkViewProps) {
           </div>
         )}
       </main>
+
+      {/* Modal Confirm Delete Single */}
+      <AlertDialog
+        open={!!itemToDelete}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+      >
+        <AlertDialogContent className="bg-card border-border/80">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Bookmark?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus komik ini dari daftar bookmark
+              Anda?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setItemToDelete(null)}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (itemToDelete) {
+                  removeBookmark(itemToDelete);
+                  setItemToDelete(null);
+                }
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal Confirm Clear All */}
+      <AlertDialog open={isClearAllOpen} onOpenChange={setIsClearAllOpen}>
+        <AlertDialogContent className="bg-card border-border/80">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bersihkan Semua Bookmark?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan menghapus SELURUH daftar bookmark Anda. Aksi ini
+              tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsClearAllOpen(false)}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                clearAllBookmarks();
+                setIsClearAllOpen(false);
+              }}
+            >
+              Ya, Bersihkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

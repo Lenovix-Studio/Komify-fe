@@ -10,6 +10,7 @@ import {
   FilePlus,
   Sparkles,
   Loader2,
+  HelpCircle,
 } from "lucide-react";
 import {
   PointerSensor,
@@ -34,7 +35,8 @@ import { ExtractModal } from "./components/ExtractModal";
 import { FixModal } from "./components/FixModal";
 import { UploadPagesModal } from "./components/UploadPagesModal";
 import { ImageCropModal } from "./components/ImageCropModal";
-import { publishComicAction, extractMetadataAction } from "./actions/actions";
+import { extractMetadataAction } from "./actions/actions";
+import { BACKEND_URL } from "@/lib/constant";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import {
@@ -57,14 +59,18 @@ type UploadPageClientProps = {
   statuses: Status[];
   censorships: Censorship[];
   languages: Language[];
+  templates: { code: string; name: string }[];
 };
 
 export default function UploadPageClient({
   statuses,
   censorships,
   languages,
+  templates,
 }: UploadPageClientProps) {
-  const [activeTemplate, setActiveTemplate] = useState<string>("doujinshi");
+  const [activeTemplate, setActiveTemplate] = useState<string>(
+    templates[0]?.code || "doujinshi",
+  );
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -84,6 +90,7 @@ export default function UploadPageClient({
   ]);
 
   const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const handlePublish = async () => {
     // =========================
     // VALIDASI DASAR (Sebelum Loading)
@@ -97,7 +104,6 @@ export default function UploadPageClient({
       return;
     }
 
-    // Tampilkan notifikasi loading interaktif
     const toastId = toast.loading("Publishing comic, please wait...");
 
     try {
@@ -116,10 +122,11 @@ export default function UploadPageClient({
       } as Partial<typeof metadata>;
 
       // TEMPLATE RULES
-      if (activeTemplate === "manhwa") {
+      const currentTemplate = activeTemplate?.toLowerCase();
+      if (currentTemplate === "manhwa") {
         delete cleanMetadata.groups;
       }
-      if (activeTemplate === "doujinshi" || activeTemplate === "manga") {
+      if (currentTemplate === "doujinshi" || currentTemplate === "manga") {
         delete cleanMetadata.authors;
       }
 
@@ -173,7 +180,6 @@ export default function UploadPageClient({
       for (const chapter of sortedChapters) {
         for (let i = 0; i < chapter.pages.length; i++) {
           const pageSrc = chapter.pages[i];
-          // blob url
           if (typeof pageSrc === "string" && pageSrc.startsWith("blob:")) {
             const response = await fetch(pageSrc);
             const pageBlob = await response.blob();
@@ -184,7 +190,6 @@ export default function UploadPageClient({
             );
             continue;
           }
-          // file object
           formData.append(`pages_${chapter.id}`, pageSrc);
         }
       }
@@ -205,29 +210,55 @@ export default function UploadPageClient({
       console.log("=======================================");
 
       // =========================
-      // REQUEST
+      // REQUEST with Progress
       // =========================
-      const result = await publishComicAction(formData);
-      if (!result.success) {
-        throw new Error(result.message || "Upload failed");
-      }
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${BACKEND_URL}/comics/publish`);
 
-      console.log(result);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round(
+              (event.loaded / event.total) * 100,
+            );
+            setUploadProgress(percentComplete);
+            toast.loading(`Uploading comic... ${percentComplete}%`, {
+              id: toastId,
+            });
+          }
+        };
 
-      // Ubah status loading menjadi sukses
-      toast.success("Comic published successfully!", { id: toastId });
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              toast.success("Comic published successfully!", { id: toastId });
+              setTimeout(() => {
+                window.location.href = "/";
+              }, 1500);
+              resolve(result);
+            } catch (e) {
+              reject(new Error("Invalid server response"));
+            }
+          } else {
+            let msg = "Upload failed";
+            try {
+              msg = JSON.parse(xhr.responseText).message || msg;
+            } catch (e) {}
+            reject(new Error(msg));
+          }
+        };
 
-      setTimeout(() => {
-        window.location.href = "/upload";
-      }, 1000);
-
-      return result;
-    } catch (error: any) {
-      // Pesan error dialihkan ke toast, log error console dihapus
-      const errorMessage = error?.message || "Failed to publish comic";
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(formData);
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to publish comic";
       toast.error(errorMessage, { id: toastId });
     } finally {
       setIsPublishing(false);
+      setUploadProgress(0);
     }
   };
 
@@ -326,6 +357,12 @@ export default function UploadPageClient({
       setImageSrc(originalSrc);
     }
   };
+  const skipCrop = () => {
+    if (!originalSrc) return;
+    setCoverImage(originalSrc);
+    setImageSrc(null);
+  };
+
   const saveCroppedImage = async () => {
     if (!imageSrc || !croppedAreaPixels) return;
     try {
@@ -360,6 +397,7 @@ export default function UploadPageClient({
       const lastMain =
         sortedPrev.length > 0 ? sortedPrev[sortedPrev.length - 1].main : 0;
       const defaultCensorshipId = censorships[0]?.id || "";
+      const defaultLanguage = languages[0]?.code || "en";
       return [
         ...prev,
         {
@@ -368,7 +406,7 @@ export default function UploadPageClient({
           sub: 0,
           title: "",
           censorship_id: defaultCensorshipId,
-          language: "en",
+          language: defaultLanguage,
           pages: [],
         },
       ];
@@ -526,7 +564,6 @@ export default function UploadPageClient({
       return;
     }
 
-    // Tampilkan notifikasi loading interaktif
     const toastId = toast.loading("Extracting metadata...");
 
     try {
@@ -556,10 +593,8 @@ export default function UploadPageClient({
       setShowExtractModal(false);
       setExtractUrl("");
 
-      // Ubah status loading menjadi sukses
       toast.success("Metadata extracted successfully!", { id: toastId });
     } catch (error) {
-      // Pesan error dialihkan ke toast, console.error dihapus sesuai permintaan
       const errorMessage =
         error instanceof Error ? error.message : "Failed to extract metadata";
       toast.error(errorMessage, { id: toastId });
@@ -573,8 +608,19 @@ export default function UploadPageClient({
     setExtractUrl("");
   };
 
+  const [isConfirming, setIsConfirming] = useState(false);
+  const handleButtonClick = () => {
+    if (!isConfirming) {
+      setIsConfirming(true);
+      setTimeout(() => setIsConfirming(false), 4000);
+    } else {
+      setIsConfirming(false);
+      handlePublish();
+    }
+  };
+
   if (!isMounted) {
-    return null; // atau sertakan markup kerangka (skeleton) tanpa DndContext
+    return null;
   }
 
   return (
@@ -598,26 +644,22 @@ export default function UploadPageClient({
         }
         centerContent={
           <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-card p-1 shadow-xs">
-            {[
-              { key: "doujinshi", label: "Doujinshi" },
-              { key: "manga", label: "Manga" },
-              { key: "manhwa", label: "Manhwa" },
-            ].map((item) => {
-              const isActive = activeTemplate === item.key;
+            {templates.map((item) => {
+              const isActive = activeTemplate === item.code;
               return (
                 <Button
-                  key={item.key}
+                  key={item.code}
                   type="button"
                   variant={isActive ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setActiveTemplate(item.key)}
+                  onClick={() => setActiveTemplate(item.code)}
                   className={`h-7 rounded-lg px-3 text-xs font-medium transition-all ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
-                  {item.label}
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
                 </Button>
               );
             })}
@@ -636,16 +678,29 @@ export default function UploadPageClient({
             <Button
               type="button"
               size="sm"
-              onClick={handlePublish}
+              onClick={handleButtonClick}
               disabled={isPublishing}
-              className="gap-2 rounded-xl bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+              className={`gap-2 rounded-xl shadow-xs transition-colors disabled:opacity-50 ${
+                isConfirming
+                  ? "bg-amber-600 text-white hover:bg-amber-700"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
             >
               {isPublishing ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : isConfirming ? (
+                <HelpCircle className="h-3.5 w-3.5" />
               ) : (
                 <Upload className="h-3.5 w-3.5" />
               )}
-              <span>{isPublishing ? "Publishing..." : "Publish Comic"}</span>
+
+              <span>
+                {isPublishing
+                  ? "Publishing..."
+                  : isConfirming
+                    ? "Upload new comic?"
+                    : "Publish Comic"}
+              </span>
             </Button>
           </>
         }
@@ -783,11 +838,11 @@ export default function UploadPageClient({
             <div className="space-y-4">
               {fields
                 .filter((field) => {
-                  if (activeTemplate === "manhwa" && field.label === "Groups")
+                  const currentTpl = activeTemplate?.toLowerCase();
+                  if (currentTpl === "manhwa" && field.label === "Groups")
                     return false;
                   if (
-                    (activeTemplate === "doujinshi" ||
-                      activeTemplate === "manga") &&
+                    (currentTpl === "doujinshi" || currentTpl === "manga") &&
                     field.label === "Authors"
                   ) {
                     return false;
@@ -858,10 +913,10 @@ export default function UploadPageClient({
                   </div>
                   <div>
                     <CardTitle className="text-lg font-bold">
-                      Chapters
+                      Chapters ({sortedChapters.length})
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Manage comic chapters and pages
+                      Manage {sortedChapters.length} comic chapters and pages
                     </CardDescription>
                   </div>
                 </div>
@@ -934,6 +989,7 @@ export default function UploadPageClient({
         setZoom={setZoom}
         onCropComplete={onCropComplete}
         saveCroppedImage={saveCroppedImage}
+        skipCrop={skipCrop}
       />
     </div>
   );

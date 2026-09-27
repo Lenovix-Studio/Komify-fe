@@ -29,25 +29,33 @@ export default function Content({ initialData, initialParams }: ContentProps) {
   const searchParams = useSearchParams();
 
   const [isPending, startTransition] = useTransition();
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/bookmarks`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBookmarkedIds(new Set(data.map((d) => d.comics.id)));
+        }
+      })
+      .catch((e) => console.error("Failed to load bookmarks", e));
+  }, []);
   const [comics, setComics] = useState<Comic[]>(initialData.data);
   const [pagination, setPagination] = useState(initialData.pagination);
   const [loading, setLoading] = useState(false);
   const [isRandomLoading, setIsRandomLoading] = useState(false);
-
   const [searchInput, setSearchInput] = useState(initialParams.q ?? "");
 
-  // Update state lokal ketika Server Data berubah dari URL
   useEffect(() => {
     setComics(initialData.data);
     setPagination(initialData.pagination);
   }, [initialData]);
 
-  // Sync Search Input dengan URL jika URL berubah eksternal
   useEffect(() => {
     setSearchInput(searchParams.get("q") ?? "");
   }, [searchParams]);
 
-  // Debounce Search untuk memperbarui URL Query Parameters
   useEffect(() => {
     const timer = setTimeout(() => {
       const currentQuery = searchParams.get("q") ?? "";
@@ -75,12 +83,15 @@ export default function Content({ initialData, initialParams }: ContentProps) {
     });
   };
 
-  // Live Auto-Update
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
+        const queryParams = new URLSearchParams(searchParams.toString());
+        if (!queryParams.has("limit")) queryParams.set("limit", "12");
+        if (!queryParams.has("page")) queryParams.set("page", "1");
+
         const res = await fetch(
-          `${BACKEND_URL}/comics?${searchParams.toString()}`,
+          `${BACKEND_URL}/comics?${queryParams.toString()}`,
           {
             cache: "no-store",
           },
@@ -204,7 +215,10 @@ export default function Content({ initialData, initialParams }: ContentProps) {
                 : comics.map((comic) => (
                     <ComicCard
                       key={comic.id}
-                      comic={comic}
+                      comic={{
+                        ...comic,
+                        is_bookmarked: bookmarkedIds.has(comic.id),
+                      }}
                       statusStyles={statusStyles}
                     />
                   ))}

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { RotatableImage } from "@/components/RotatableImage";
 import { useParams, useRouter } from "next/navigation";
-
 import {
   ArrowLeft,
   ChevronLeft,
@@ -14,43 +13,8 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { Loading } from "@/components/loading";
-
-type ChapterPage = {
-  id: string;
-  filename: string;
-  filepath: string;
-  page_number: number;
-  width: number | null;
-  height: number | null;
-};
-
-type ChapterDetail = {
-  id: string;
-
-  comic: {
-    id: string;
-    title: string;
-    legacy_id: number;
-  };
-
-  title: string;
-  chapter_number: string;
-  total_pages: number;
-
-  published_at: string | null;
-
-  language: {
-    code: string;
-    name: string;
-  };
-
-  censorship: {
-    id: string;
-    name: string;
-  };
-
-  pages: ChapterPage[];
-};
+import { BACKEND_URL } from "@/lib/constant";
+import { ChapterDetail } from "@/types/chapterPage";
 
 export default function ChapterReaderPage() {
   const router = useRouter();
@@ -69,9 +33,21 @@ export default function ChapterReaderPage() {
   const [zoom, setZoom] = useState(80);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [rotations, setRotations] = useState<Record<string, number>>({});
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+  const handleRotate = (id: string) => {
+    setRotations((prev) => ({
+      ...prev,
+      [id]: ((prev[id] || 0) + 90) % 360,
+    }));
+  };
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToBottom = () =>
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
 
   useEffect(() => {
     const fetchChapter = async () => {
@@ -145,7 +121,6 @@ export default function ChapterReaderPage() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      // Sembunyikan jika scroll ke bawah > 80px, tampilkan jika scroll ke atas
       if (currentScrollY > 80 && currentScrollY > lastScrollY) {
         setIsVisible(false);
       } else {
@@ -248,15 +223,35 @@ export default function ChapterReaderPage() {
               className="group relative overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm"
             >
               <div className="relative">
-                <Image
-                  src={`${baseUrl}${page.filepath}`}
+                <RotatableImage
+                  src={`${BACKEND_URL}${page.filepath}`}
                   alt={`Page ${page.page_number}`}
-                  width={1200}
-                  height={1800}
-                  className="h-auto w-full"
-                  loading="lazy"
-                  unoptimized
+                  rotation={rotations[page.id] || 0}
+                  className="h-auto w-full transition-opacity duration-300"
                 />
+
+                <div className="absolute top-4 right-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-10">
+                  <button
+                    onClick={() => handleRotate(page.id)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-colors shadow-lg border border-white/10"
+                    title="Rotate Image"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-linear-to-t from-black/75 via-black/40 to-transparent px-5 py-4 opacity-0 transition duration-200 group-hover:opacity-100">
@@ -269,7 +264,48 @@ export default function ChapterReaderPage() {
           ))}
         </div>
 
-        <div className="fixed right-6 bottom-6 z-50">
+        <div className="fixed right-6 bottom-6 z-50 flex flex-col gap-3">
+          <div className="flex flex-col items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
+            <button
+              onClick={scrollToTop}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+              title="Scroll to Top"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m18 15-6-6-6 6" />
+              </svg>
+            </button>
+            <div className="w-6 h-px bg-border/80" />
+            <button
+              onClick={scrollToBottom}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+              title="Scroll to Bottom"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+          </div>
           <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
             <div className="flex items-center">
               <button
@@ -357,9 +393,7 @@ export default function ChapterReaderPage() {
 }
 
 async function getComicChapters(comicId: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-  const response = await fetch(`${baseUrl}/comics/${comicId}/chapters`, {
+  const response = await fetch(`${BACKEND_URL}/comics/${comicId}/chapters`, {
     cache: "no-store",
   });
   if (!response.ok) {
@@ -369,9 +403,7 @@ async function getComicChapters(comicId: string) {
   return response.json();
 }
 async function getChapter(chapterId: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-  const response = await fetch(`${baseUrl}/chapters/${chapterId}`, {
+  const response = await fetch(`${BACKEND_URL}/chapters/${chapterId}`, {
     cache: "no-store",
   });
   if (!response.ok) {
