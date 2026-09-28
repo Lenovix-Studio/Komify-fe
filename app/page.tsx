@@ -5,8 +5,9 @@ import Content from "./content";
 import type { HomepageResponse } from "@/types/homePage";
 import { BACKEND_URL } from "@/lib/constant";
 
+const isDev = process.env.NODE_ENV === "development";
 export const metadata: Metadata = {
-  title: "Home | Komify",
+  title: `[${isDev ? "DEV" : "PROD"}] Home | Komify`,
 };
 
 interface PageProps {
