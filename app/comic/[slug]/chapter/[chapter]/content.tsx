@@ -111,22 +111,6 @@ export default function ChapterReaderContent({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  if (Loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background">
-        <Loading text="Loading chapter..." />
-      </main>
-    );
-  }
-
-  if (!chapter) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-zinc-400">
-        Chapter not found
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Reader Bar */}
