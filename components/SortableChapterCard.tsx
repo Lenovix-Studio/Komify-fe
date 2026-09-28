@@ -122,6 +122,9 @@ export function SortableChapterCard({
             : "translate-x-0 opacity-100 visibility-visible"
         }`}
       >
+        <span className="hidden rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-[11px] font-semibold text-sky-700 shadow-xs sm:block">
+          {chapter.language?.name || "Unknown"}
+        </span>
         <span className="hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-xs sm:block">
           {chapter.censorship?.name || "Unknown"}
         </span>

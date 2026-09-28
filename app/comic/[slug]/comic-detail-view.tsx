@@ -585,7 +585,33 @@ export function ComicDetailView({
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
-              onClick={() => setIsOrderingMode((prev) => !prev)}
+              onClick={async () => {
+                if (isOrderingMode) {
+                  try {
+                    const res = await fetch(
+                      `${BACKEND_URL}/comics/${comic.id}/chapters/reorder`,
+                      {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          chapter_ids: chapters.map((c) => c.id),
+                        }),
+                      },
+                    );
+                    if (!res.ok) throw new Error("Failed");
+                    toast.success("Order saved successfully");
+                    setChapters((prev) =>
+                      prev.map((ch, idx) => ({
+                        ...ch,
+                        chapter_number: String(idx + 1).padStart(3, "0"),
+                      })),
+                    );
+                  } catch (e) {
+                    toast.error("Failed to save order");
+                  }
+                }
+                setIsOrderingMode((prev) => !prev);
+              }}
               className={`flex h-11 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold border transition-all duration-200 active:scale-95 ${
                 isOrderingMode
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 shadow-xs hover:bg-emerald-500/20"

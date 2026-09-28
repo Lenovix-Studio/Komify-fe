@@ -81,18 +81,42 @@ export default function ChapterEditContent({
 
   const [deletedPages, setDeletedPages] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const handleSave = async () => {
+    if (!chapterMetadata.censorship_id) {
+      toast.error("Please select censorship");
+      return;
+    }
+
+    if (!chapterMetadata.language_code) {
+      toast.error("Please select language");
+      return;
+    }
+
+    const invalidReplace = pages.find(
+      (page) => page.isExisting && page.isReplaced && !page.file,
+    );
+
+    if (invalidReplace) {
+      toast.error("Some replaced pages have no file selected");
+      return;
+    }
+
+    setIsSaving(true);
+    setUploadProgress(0);
+
     try {
-      setIsSaving(true);
+      const currentPageIds = pages.filter((p) => p.isExisting).map((p) => p.id);
+      const validDeletedPages = deletedPages.filter(
+        (id) => !currentPageIds.includes(id),
+      );
 
-      if (!chapterMetadata.censorship_id) {
-        toast.error("Please select censorship");
-        return;
-      }
-
-      if (!chapterMetadata.language_code) {
-        toast.error("Please select language");
-        return;
+      if (validDeletedPages.length !== deletedPages.length) {
+        console.warn(
+          "Filtered out invalid deleted pages:",
+          deletedPages.filter((id) => !validDeletedPages.includes(id)),
+        );
       }
 
       const payload = {
@@ -110,24 +134,12 @@ export default function ChapterEditContent({
             : "create",
           filename: page.filename ?? null,
         })),
-        deleted_pages: deletedPages,
+        deleted_pages: validDeletedPages,
       };
-
-      const currentPageIds = pages.filter((p) => p.isExisting).map((p) => p.id);
-      const validDeletedPages = deletedPages.filter(
-        (id) => !currentPageIds.includes(id),
-      );
-
-      if (validDeletedPages.length !== deletedPages.length) {
-        console.warn(
-          "Filtered out invalid deleted pages:",
-          deletedPages.filter((id) => !validDeletedPages.includes(id)),
-        );
-        payload.deleted_pages = validDeletedPages;
-      }
 
       const formData = new FormData();
       formData.append("document", JSON.stringify(payload));
+
       pages.forEach((page) => {
         const shouldUpload =
           (!page.isExisting && page.file) ||
@@ -138,46 +150,42 @@ export default function ChapterEditContent({
         }
       });
 
-      const invalidReplace = pages.find(
-        (page) => page.isExisting && page.isReplaced && !page.file,
-      );
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", `${BACKEND_URL}/chapters/${chapterId}`, true);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round(
+              (event.loaded / event.total) * 100,
+            );
+            setUploadProgress(percentComplete);
+          }
+        };
 
-      if (invalidReplace) {
-        toast.error("Some replaced pages have no file selected");
-        return;
-      }
+        xhr.onload = () => {
+          try {
+            const json = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(json);
+            } else {
+              const message = Array.isArray(json.message)
+                ? json.message.join(", ")
+                : json.message;
+              reject(new Error(message || "Failed to update chapter"));
+            }
+          } catch (e) {
+            reject(new Error("Failed to parse response"));
+          }
+        };
 
-      console.log("====================================");
-      console.log("UPDATE CHAPTER - CURRENT STATE");
-      console.log("Pages array:", pages);
-      console.log("Deleted Pages:", deletedPages);
-      console.log("====================================");
-      console.log("UPDATE CHAPTER PAYLOAD");
-      console.log("Payload pages:", payload.pages);
-      console.log("Payload deleted_pages:", payload.deleted_pages);
-      console.log(payload);
-      console.log("====================================");
-
-      const response = await fetch(`${BACKEND_URL}/chapters/${chapterId}`, {
-        method: "PUT",
-        body: formData,
+        xhr.onerror = () => reject(new Error("Network Error"));
+        xhr.send(formData);
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        const message = Array.isArray(result.message)
-          ? result.message.join(", ")
-          : result.message;
-
-        throw new Error(message || "Failed to update chapter");
-      }
 
       toast.success("Chapter updated successfully");
       router.push(`/comic/${slug}`);
     } catch (error) {
       console.error(error);
-
       toast.error(
         error instanceof Error ? error.message : "Failed to update chapter",
       );
@@ -245,14 +253,6 @@ export default function ChapterEditContent({
     }));
   const [pages, setPages] = useState<EditablePage[]>(initialMappedPages);
 
-  const handleAddPages = () => {
-    const currentLength = pages.length;
-    const newPages = Array.from({ length: 5 }).map((_, idx) => ({
-      id: crypto.randomUUID(),
-      page: currentLength + idx + 1,
-    }));
-    setPages((prev) => [...prev, ...newPages]);
-  };
   const handleUploadPages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -376,12 +376,16 @@ export default function ChapterEditContent({
             </Link>
 
             <button
-              onClick={handleSave}
+              onClick={() => setShowConfirmDialog(true)}
               disabled={isSaving}
               className="flex items-center gap-2 rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400"
             >
               <Save className="h-4 w-4" />
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving
+                ? uploadProgress < 100
+                  ? `Uploading... ${uploadProgress}%`
+                  : "Processing..."
+                : "Save"}
             </button>
           </div>
         </div>
@@ -466,7 +470,38 @@ export default function ChapterEditContent({
             </div>
           </section>
 
-          {/* Danger Zone */}
+          {/* Save Confirm Dialog */}
+          <AlertDialog
+            open={showConfirmDialog}
+            onOpenChange={setShowConfirmDialog}
+          >
+            <AlertDialogContent className="bg-zinc-950 border-zinc-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">
+                  Save Changes
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-zinc-400">
+                  Are you sure you want to save these chapter changes? This will
+                  replace the uploaded pages and update metadata.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    setShowConfirmDialog(false);
+                    handleSave();
+                  }}
+                  className="bg-indigo-500 text-white hover:bg-indigo-400"
+                >
+                  Confirm Save
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           <section className="rounded-3xl border border-red-500/20 bg-red-500/5 p-6">
             <h2 className="mb-4 text-lg font-bold text-red-300">Danger Zone</h2>
 

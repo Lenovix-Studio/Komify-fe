@@ -68,15 +68,52 @@ export default function UploadPageClient({
   languages,
   templates,
 }: UploadPageClientProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [originalSrc, setOriginalSrc] = useState<string | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [savedCrop, setSavedCrop] = useState({ x: 0, y: 0 });
+  const [savedRotation, setSavedRotation] = useState(0);
+  const [savedZoom, setSavedZoom] = useState(1);
+  const [tempPages, setTempPages] = useState<TempPage[]>([]);
+  const [showExtractModal, setShowExtractModal] = useState(false);
+  const [extractUrl, setExtractUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [activeUploadChapterId, setActiveUploadChapterId] = useState<
+    string | null
+  >(null);
   const [activeTemplate, setActiveTemplate] = useState<string>(
     templates[0]?.code || "doujinshi",
   );
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
+  const [fixModal, setFixModal] = useState<{
+    open: boolean;
+    field: string;
+    value: string;
+    preview: string;
+  }>({
+    open: false,
+    field: "",
+    value: "",
+    preview: "",
+  });
+  const [metadata, setMetadata] = useState({
+    title: "",
+    alternative_title: "",
+    parodies: "",
+    characters: "",
+    artists: "",
+    authors: "",
+    groups: "",
+    tags: "",
+    status_id: statuses[0]?.id,
+  });
   const [chapters, setChapters] = useState<Chapter[]>(() => [
     {
       id: uuidv7(),
@@ -89,8 +126,18 @@ export default function UploadPageClient({
     },
   ]);
 
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isPublishing) {
+      document.title = "Uploading...";
+    } else {
+      document.title = "Upload | Komify";
+    }
+  }, [isPublishing]);
+
   const handlePublish = async () => {
     // =========================
     // VALIDASI DASAR (Sebelum Loading)
@@ -262,29 +309,7 @@ export default function UploadPageClient({
     }
   };
 
-  // FIX PARAGRAPH MODAL STATE
-  const [fixModal, setFixModal] = useState<{
-    open: boolean;
-    field: string;
-    value: string;
-    preview: string;
-  }>({
-    open: false,
-    field: "",
-    value: "",
-    preview: "",
-  });
-  const [metadata, setMetadata] = useState({
-    title: "",
-    alternative_title: "",
-    parodies: "",
-    characters: "",
-    artists: "",
-    authors: "",
-    groups: "",
-    tags: "",
-    status_id: statuses[0]?.id,
-  });
+  // FIX PARAGRAPH MODAL
   const fixParagraph = useCallback((text: any) => {
     if (!text) return "";
     let result = Array.isArray(text) ? text.join(", ") : String(text);
@@ -319,17 +344,7 @@ export default function UploadPageClient({
     });
   };
 
-  // COVER IMAGE STATE
-  const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [originalSrc, setOriginalSrc] = useState<string | null>(null);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [rotation, setRotation] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-  const [savedCrop, setSavedCrop] = useState({ x: 0, y: 0 });
-  const [savedRotation, setSavedRotation] = useState(0);
-  const [savedZoom, setSavedZoom] = useState(1);
+  // COVER IMAGE
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -464,11 +479,7 @@ export default function UploadPageClient({
     });
   };
 
-  // PAGES STATE MANAGEMENT
-  const [activeUploadChapterId, setActiveUploadChapterId] = useState<
-    string | null
-  >(null);
-  const [tempPages, setTempPages] = useState<TempPage[]>([]);
+  // PAGES MANAGEMENT
   const handlePagesChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     chapterId: string,
@@ -555,9 +566,6 @@ export default function UploadPageClient({
   }, []);
 
   // EXTRACT METADATA FROM URL
-  const [showExtractModal, setShowExtractModal] = useState(false);
-  const [extractUrl, setExtractUrl] = useState("");
-  const [extracting, setExtracting] = useState(false);
   const handleExtract = async () => {
     if (!extractUrl.trim()) {
       toast.error("Please enter a valid URL");
@@ -608,7 +616,6 @@ export default function UploadPageClient({
     setExtractUrl("");
   };
 
-  const [isConfirming, setIsConfirming] = useState(false);
   const handleButtonClick = () => {
     if (!isConfirming) {
       setIsConfirming(true);
@@ -696,7 +703,9 @@ export default function UploadPageClient({
 
               <span>
                 {isPublishing
-                  ? "Publishing..."
+                  ? uploadProgress < 100
+                    ? `Uploading... ${uploadProgress}%`
+                    : "Processing..."
                   : isConfirming
                     ? "Upload new comic?"
                     : "Publish Comic"}
