@@ -211,13 +211,13 @@ export const ChapterItem: React.FC<ChapterItemProps> = ({
                   Upload Chapter Pages
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  JPG, PNG or PDF • Click to browse
+                  JPG, PNG, PDF, ZIP, CBZ • Click to browse
                 </span>
               </div>
               <input
                 type="file"
                 id={`input-file-chapter-${chapter.id}`}
-                accept="image/*,.pdf"
+                accept="image/*,.pdf,.zip,.cbz"
                 className="hidden"
                 multiple
                 onChange={(e) => handlePagesChange(e, chapter.id)}
@@ -271,7 +271,7 @@ export const ChapterItem: React.FC<ChapterItemProps> = ({
                     <input
                       type="file"
                       id={`replace-file-chapter-${chapter.id}`}
-                      accept="image/*,.pdf"
+                      accept="image/*,.pdf,.zip,.cbz"
                       className="hidden"
                       multiple
                       onChange={(e) => handlePagesChange(e, chapter.id)}

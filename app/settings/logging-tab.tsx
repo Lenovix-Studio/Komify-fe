@@ -57,6 +57,31 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+function formatFormattedJson(data: any): string {
+  const parseDeep = (val: any): any => {
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        if (typeof parsed === "object" && parsed !== null) {
+          return parseDeep(parsed);
+        }
+      } catch {}
+    } else if (Array.isArray(val)) {
+      return val.map(parseDeep);
+    } else if (typeof val === "object" && val !== null) {
+      const result: Record<string, any> = {};
+      for (const key in val) {
+        result[key] = parseDeep(val[key]);
+      }
+      return result;
+    }
+    return val;
+  };
+
+  const parsedData = parseDeep(data);
+  return JSON.stringify(parsedData, null, 2);
+}
+
 export function LoggingTab() {
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("ALL");
@@ -351,7 +376,7 @@ export function LoggingTab() {
         open={!!selectedLog}
         onOpenChange={(open) => !open && setSelectedLog(null)}
       >
-        <DialogContent className="sm:max-w-3xl bg-zinc-950 border-zinc-800 text-zinc-200">
+        <DialogContent className="max-w-300! bg-zinc-950 border-zinc-800 text-zinc-200">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-xl">
               {selectedLog && getLevelBadge(selectedLog.level)}
@@ -365,6 +390,7 @@ export function LoggingTab() {
 
           {selectedLog && (
             <div className="mt-4 space-y-6">
+              {/* Message */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-zinc-400">
@@ -377,11 +403,12 @@ export function LoggingTab() {
                     <Copy className="h-3.5 w-3.5" /> Copy
                   </button>
                 </div>
-                <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-sm text-rose-300 whitespace-pre-wrap text-wrap">
+                <div className="max-h-20 overflow-y-auto rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-sm text-rose-300 whitespace-pre-wrap text-wrap">
                   {selectedLog.message}
                 </div>
               </div>
 
+              {/* Context / Payload */}
               {selectedLog.context &&
                 Object.keys(selectedLog.context).length > 0 && (
                   <div>
@@ -392,7 +419,7 @@ export function LoggingTab() {
                       <button
                         onClick={() =>
                           handleCopy(
-                            JSON.stringify(selectedLog.context, null, 2),
+                            formatFormattedJson(selectedLog.context),
                             "Context",
                           )
                         }
@@ -401,12 +428,13 @@ export function LoggingTab() {
                         <Copy className="h-3.5 w-3.5" /> Copy
                       </button>
                     </div>
-                    <pre className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-xs overflow-x-auto text-zinc-300 whitespace-pre-wrap text-wrap">
-                      {JSON.stringify(selectedLog.context, null, 2)}
+                    <pre className="max-h-100 overflow-y-auto rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-xs text-zinc-300 whitespace-pre-wrap text-wrap">
+                      {formatFormattedJson(selectedLog.context)}
                     </pre>
                   </div>
                 )}
 
+              {/* Stack Trace */}
               {selectedLog.stack_trace && (
                 <div>
                   <div className="mb-2 flex items-center justify-between">
@@ -422,7 +450,7 @@ export function LoggingTab() {
                       <Copy className="h-3.5 w-3.5" /> Copy
                     </button>
                   </div>
-                  <pre className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-xs overflow-x-auto text-zinc-500 whitespace-pre-wrap text-wrap">
+                  <pre className="max-h-20 overflow-y-auto rounded-lg bg-zinc-900 border border-zinc-800 p-4 font-mono text-xs text-zinc-500 whitespace-pre-wrap text-wrap">
                     {selectedLog.stack_trace}
                   </pre>
                 </div>

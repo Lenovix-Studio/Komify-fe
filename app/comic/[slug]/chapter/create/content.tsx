@@ -27,6 +27,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import JSZip from "jszip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,19 +153,74 @@ export default function CreateChapterContent({
   };
 
   /* ================= ADD PAGES ================= */
-  const handleAddPages = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddPages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-
     if (!files.length) return;
 
-    const mapped = files.map((file, idx) => ({
-      id: crypto.randomUUID(),
-      page: pages.length + idx + 1,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    const toastId = toast.loading("Processing files...");
+    let mapped: any[] = [];
+    let currentLength = pages.length;
 
-    setPages((prev) => [...prev, ...mapped]);
+    try {
+      for (const file of files) {
+        if (
+          file.name.toLowerCase().endsWith(".zip") ||
+          file.name.toLowerCase().endsWith(".cbz")
+        ) {
+          toast.loading(`Extracting ${file.name}...`, { id: toastId });
+          const zip = await JSZip.loadAsync(file);
+          const imageEntries = Object.values(zip.files).filter((entry) => {
+            const fileName = entry.name.split("/").pop() || entry.name;
+            return (
+              !entry.dir &&
+              !entry.name.includes("__MACOSX") &&
+              !fileName.startsWith("._") &&
+              (fileName.toLowerCase().endsWith(".jpg") ||
+                fileName.toLowerCase().endsWith(".jpeg") ||
+                fileName.toLowerCase().endsWith(".png") ||
+                fileName.toLowerCase().endsWith(".webp") ||
+                fileName.toLowerCase().endsWith(".avif") ||
+                fileName.toLowerCase().endsWith(".jxl"))
+            );
+          });
+
+          imageEntries.sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            }),
+          );
+
+          for (const entry of imageEntries) {
+            const blob = await entry.async("blob");
+            const filename = entry.name.split("/").pop() || entry.name;
+            const extractedFile = new File([blob], filename, {
+              type: blob.type || "image/jpeg",
+            });
+
+            mapped.push({
+              id: crypto.randomUUID(),
+              page: currentLength + mapped.length + 1,
+              file: extractedFile,
+              previewUrl: URL.createObjectURL(extractedFile),
+            });
+          }
+        } else {
+          mapped.push({
+            id: crypto.randomUUID(),
+            page: currentLength + mapped.length + 1,
+            file,
+            previewUrl: URL.createObjectURL(file),
+          });
+        }
+      }
+
+      setPages((prev) => [...prev, ...mapped]);
+      toast.success(`Processed ${mapped.length} pages`, { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to process files", { id: toastId });
+    }
 
     e.target.value = "";
   };
@@ -431,7 +487,7 @@ export default function CreateChapterContent({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf,.zip,.cbz"
                 multiple
                 className="hidden"
                 onChange={handleAddPages}

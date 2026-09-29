@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { v7 as uuidv7 } from "uuid";
+import JSZip from "jszip";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -485,20 +486,77 @@ export default function UploadPageClient({
   };
 
   // PAGES MANAGEMENT
-  const handlePagesChange = (
+  const handlePagesChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     chapterId: string,
   ) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const filesArray = Array.from(files);
-      const mappedFiles = filesArray.map((file) => ({
-        id: uuidv7(),
-        name: file.name,
-        url: URL.createObjectURL(file),
-      }));
-      setTempPages((prev) => [...prev, ...mappedFiles]);
-      setActiveUploadChapterId(chapterId);
+      let mappedFiles: any[] = [];
+      const toastId = toast.loading("Processing files...");
+
+      try {
+        for (const file of filesArray) {
+          if (
+            file.name.toLowerCase().endsWith(".zip") ||
+            file.name.toLowerCase().endsWith(".cbz")
+          ) {
+            toast.loading(`Extracting ${file.name}...`, { id: toastId });
+            const zip = await JSZip.loadAsync(file);
+            const imageEntries = Object.values(zip.files).filter((entry) => {
+              const fileName = entry.name.split("/").pop() || entry.name;
+              return (
+                !entry.dir &&
+                !entry.name.includes("__MACOSX") &&
+                !fileName.startsWith("._") &&
+                (fileName.toLowerCase().endsWith(".jpg") ||
+                  fileName.toLowerCase().endsWith(".jpeg") ||
+                  fileName.toLowerCase().endsWith(".png") ||
+                  fileName.toLowerCase().endsWith(".webp") ||
+                  fileName.toLowerCase().endsWith(".avif") ||
+                  fileName.toLowerCase().endsWith(".jxl"))
+              );
+            });
+
+            imageEntries.sort((a, b) =>
+              a.name.localeCompare(b.name, undefined, {
+                numeric: true,
+                sensitivity: "base",
+              }),
+            );
+
+            for (const entry of imageEntries) {
+              const blob = await entry.async("blob");
+              const filename = entry.name.split("/").pop() || entry.name;
+              const extractedFile = new File([blob], filename, {
+                type: blob.type || "image/jpeg",
+              });
+
+              mappedFiles.push({
+                id: uuidv7(),
+                name: extractedFile.name,
+                url: URL.createObjectURL(extractedFile),
+                file: extractedFile,
+              });
+            }
+          } else {
+            mappedFiles.push({
+              id: uuidv7(),
+              name: file.name,
+              url: URL.createObjectURL(file),
+              file: file,
+            });
+          }
+        }
+
+        toast.success(`Processed ${mappedFiles.length} pages`, { id: toastId });
+        setTempPages((prev) => [...prev, ...mappedFiles]);
+        setActiveUploadChapterId(chapterId);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to process files", { id: toastId });
+      }
     }
   };
   const handleOpenPreview = (chapterId: string, savedPages: string[]) => {
@@ -512,6 +570,9 @@ export default function UploadPageClient({
   };
   const saveUploadedPages = () => {
     if (!activeUploadChapterId) return;
+    if (!coverImage && tempPages.length > 0) {
+      setCoverImage(tempPages[0].url);
+    }
     setChapters((prev) =>
       prev.map((c) =>
         c.id === activeUploadChapterId

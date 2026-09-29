@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import JSZip from "jszip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,15 +69,14 @@ export default function ChapterEditContent({
   );
 
   const [chapterMetadata, setChapterMetadata] = useState({
-    title: initialChapterData?.chapter?.title || "",
+    title: initialChapterData?.title || "",
     censorship_id:
-      censorships.find(
-        (c) => c.name === initialChapterData?.chapter?.censorship?.name,
-      )?.id ||
+      censorships.find((c) => c.name === initialChapterData?.censorship?.name)
+        ?.id ||
       censorships[0]?.id ||
       "",
     language_code:
-      initialChapterData?.chapter?.language?.code || languages[0]?.code || "",
+      initialChapterData?.language?.code || languages[0]?.code || "",
   });
 
   const [deletedPages, setDeletedPages] = useState<string[]>([]);
@@ -253,18 +253,76 @@ export default function ChapterEditContent({
     }));
   const [pages, setPages] = useState<EditablePage[]>(initialMappedPages);
 
-  const handleUploadPages = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadPages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    const currentLength = pages.length;
-    const newPages = files.map((file, idx) => ({
-      id: crypto.randomUUID(),
-      page: currentLength + idx + 1,
-      file,
-      filename: file.name,
-      url: URL.createObjectURL(file),
-    }));
-    setPages((prev) => [...prev, ...newPages]);
+
+    const toastId = toast.loading("Processing files...");
+    let newPages: any[] = [];
+    let currentLength = pages.length;
+
+    try {
+      for (const file of files) {
+        if (
+          file.name.toLowerCase().endsWith(".zip") ||
+          file.name.toLowerCase().endsWith(".cbz")
+        ) {
+          toast.loading(`Extracting ${file.name}...`, { id: toastId });
+          const zip = await JSZip.loadAsync(file);
+          const imageEntries = Object.values(zip.files).filter((entry) => {
+            const fileName = entry.name.split("/").pop() || entry.name;
+            return (
+              !entry.dir &&
+              !entry.name.includes("__MACOSX") &&
+              !fileName.startsWith("._") &&
+              (fileName.toLowerCase().endsWith(".jpg") ||
+                fileName.toLowerCase().endsWith(".jpeg") ||
+                fileName.toLowerCase().endsWith(".png") ||
+                fileName.toLowerCase().endsWith(".webp") ||
+                fileName.toLowerCase().endsWith(".avif") ||
+                fileName.toLowerCase().endsWith(".jxl"))
+            );
+          });
+
+          imageEntries.sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            }),
+          );
+
+          for (const entry of imageEntries) {
+            const blob = await entry.async("blob");
+            const filename = entry.name.split("/").pop() || entry.name;
+            const extractedFile = new File([blob], filename, {
+              type: blob.type || "image/jpeg",
+            });
+
+            newPages.push({
+              id: crypto.randomUUID(),
+              page: currentLength + newPages.length + 1,
+              file: extractedFile,
+              filename: extractedFile.name,
+              url: URL.createObjectURL(extractedFile),
+            });
+          }
+        } else {
+          newPages.push({
+            id: crypto.randomUUID(),
+            page: currentLength + newPages.length + 1,
+            file,
+            filename: file.name,
+            url: URL.createObjectURL(file),
+          });
+        }
+      }
+
+      setPages((prev) => [...prev, ...newPages]);
+      toast.success(`Processed ${newPages.length} pages`, { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to process files", { id: toastId });
+    }
   };
   const handleClearPages = () => {
     const existingIds = pages.filter((p) => p.isExisting).map((p) => p.id);
@@ -316,7 +374,7 @@ export default function ChapterEditContent({
         type="file"
         id={inputId}
         multiple
-        accept="image/*"
+        accept="image/*,.pdf,.zip,.cbz"
         className="hidden"
         onChange={handleUploadPages}
         onClick={(e) => {
@@ -749,7 +807,7 @@ const SortablePageCard = React.memo(function SortablePageCard({
 
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,.zip,.cbz"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
