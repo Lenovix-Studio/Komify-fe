@@ -1,10 +1,9 @@
 "use client";
-
+import { extractFileViaScraper } from "@/lib/server-extractor";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import JSZip from "jszip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -263,48 +262,23 @@ export default function ChapterEditContent({
 
     try {
       for (const file of files) {
-        if (
-          file.name.toLowerCase().endsWith(".zip") ||
-          file.name.toLowerCase().endsWith(".cbz")
-        ) {
-          toast.loading(`Extracting ${file.name}...`, { id: toastId });
-          const zip = await JSZip.loadAsync(file);
-          const imageEntries = Object.values(zip.files).filter((entry) => {
-            const fileName = entry.name.split("/").pop() || entry.name;
-            return (
-              !entry.dir &&
-              !entry.name.includes("__MACOSX") &&
-              !fileName.startsWith("._") &&
-              (fileName.toLowerCase().endsWith(".jpg") ||
-                fileName.toLowerCase().endsWith(".jpeg") ||
-                fileName.toLowerCase().endsWith(".png") ||
-                fileName.toLowerCase().endsWith(".webp") ||
-                fileName.toLowerCase().endsWith(".avif") ||
-                fileName.toLowerCase().endsWith(".jxl"))
-            );
+        if (file.name.toLowerCase().match(/\.(pdf|zip|cbz)$/)) {
+          toast.loading(`Extracting ${file.name} on server...`, {
+            id: toastId,
           });
-
-          imageEntries.sort((a, b) =>
-            a.name.localeCompare(b.name, undefined, {
-              numeric: true,
-              sensitivity: "base",
-            }),
-          );
-
-          for (const entry of imageEntries) {
-            const blob = await entry.async("blob");
-            const filename = entry.name.split("/").pop() || entry.name;
-            const extractedFile = new File([blob], filename, {
-              type: blob.type || "image/jpeg",
-            });
-
-            newPages.push({
-              id: crypto.randomUUID(),
-              page: currentLength + newPages.length + 1,
-              file: extractedFile,
-              filename: extractedFile.name,
-              url: URL.createObjectURL(extractedFile),
-            });
+          try {
+            const extractedFiles = await extractFileViaScraper(file);
+            for (const extractedFile of extractedFiles) {
+              newPages.push({
+                id: crypto.randomUUID(),
+                page: currentLength + newPages.length + 1,
+                file: extractedFile,
+                filename: extractedFile.name,
+                url: URL.createObjectURL(extractedFile),
+              });
+            }
+          } catch (err: any) {
+            toast.error(err.message || "Failed to extract");
           }
         } else {
           newPages.push({
