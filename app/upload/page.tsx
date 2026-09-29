@@ -28,6 +28,7 @@ export default async function UploadPage() {
   const censorshipType = types.find((t) => t.code === "CENSORSHIP");
   const languageType = types.find((t) => t.code === "LANGUAGE");
   const templatesType = types.find((t) => t.code === "TEMPLATE");
+  const scraperType = types.find((t) => t.code === "SCRAPER_WEB");
 
   const statuses: Status[] = details
     .filter((d) => d.type_id === statusType?.id && d.is_active)
@@ -44,8 +45,13 @@ export default async function UploadPage() {
     .filter((d) => d.type_id === templatesType?.id && d.is_active)
     .map((d) => ({ code: d.code, name: d.name }));
 
+  const scrapers = details
+    .filter((d) => d.type_id === scraperType?.id && d.is_active)
+    .map((d) => ({ code: d.code, name: d.name }));
+
   return (
     <UploadPageClient
+      scrapers={scrapers}
       statuses={statuses}
       censorships={censorships}
       languages={languages}

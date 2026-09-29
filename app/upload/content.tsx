@@ -60,6 +60,7 @@ type UploadPageClientProps = {
   censorships: Censorship[];
   languages: Language[];
   templates: { code: string; name: string }[];
+  scrapers: { code: string; name: string }[];
 };
 
 export default function UploadPageClient({
@@ -67,6 +68,7 @@ export default function UploadPageClient({
   censorships,
   languages,
   templates,
+  scrapers,
 }: UploadPageClientProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -83,9 +85,12 @@ export default function UploadPageClient({
   const [savedZoom, setSavedZoom] = useState(1);
   const [tempPages, setTempPages] = useState<TempPage[]>([]);
   const [showExtractModal, setShowExtractModal] = useState(false);
-  const [extractUrl, setExtractUrl] = useState("");
+  const [extractUrls, setExtractUrls] = useState<string[]>([""]);
   const [extracting, setExtracting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [scraperCode, setScraperCode] = useState<string>(
+    scrapers.length > 0 ? scrapers[0].code : "",
+  );
   const [activeUploadChapterId, setActiveUploadChapterId] = useState<
     string | null
   >(null);
@@ -567,8 +572,9 @@ export default function UploadPageClient({
 
   // EXTRACT METADATA FROM URL
   const handleExtract = async () => {
-    if (!extractUrl.trim()) {
-      toast.error("Please enter a valid URL");
+    const validUrls = extractUrls.filter((u) => u.trim() !== "");
+    if (validUrls.length === 0) {
+      toast.error("Please enter at least one valid URL");
       return;
     }
 
@@ -577,29 +583,97 @@ export default function UploadPageClient({
     try {
       setExtracting(true);
 
-      const result = await extractMetadataAction(extractUrl);
-      if (!result.success) {
-        throw new Error(result.message || "Failed to extract metadata");
+      let mergedData: any = {};
+      const newChapters: Chapter[] = [];
+      let baseLength = chapters.length;
+      if (
+        chapters.length === 1 &&
+        chapters[0].title === "" &&
+        chapters[0].pages.length === 0
+      ) {
+        baseLength = 0;
       }
 
-      const data = result.data;
+      for (let i = 0; i < validUrls.length; i++) {
+        const url = validUrls[i].trim();
+        const result = await extractMetadataAction(url, scraperCode);
+        if (!result.success || !result.data) {
+          throw new Error(
+            result.message || `Failed to extract metadata from ${url}`,
+          );
+        }
+
+        const data = result.data;
+
+        if (i === 0) {
+          mergedData.title = data.title || "";
+          mergedData.alternative_title = data.alternative_title || "";
+          mergedData.parodies = Array.isArray(data.parodies)
+            ? data.parodies
+            : [];
+          mergedData.characters = Array.isArray(data.characters)
+            ? data.characters
+            : [];
+          mergedData.artists = Array.isArray(data.artists) ? data.artists : [];
+          mergedData.groups = Array.isArray(data.groups) ? data.groups : [];
+          mergedData.tags = Array.isArray(data.tags) ? data.tags : [];
+        } else {
+          if (Array.isArray(data.parodies))
+            mergedData.parodies.push(...data.parodies);
+          if (Array.isArray(data.characters))
+            mergedData.characters.push(...data.characters);
+          if (Array.isArray(data.artists))
+            mergedData.artists.push(...data.artists);
+          if (Array.isArray(data.groups))
+            mergedData.groups.push(...data.groups);
+          if (Array.isArray(data.tags)) mergedData.tags.push(...data.tags);
+        }
+
+        const chapTitle = url;
+
+        newChapters.push({
+          id: crypto.randomUUID(),
+          title: chapTitle,
+          main: baseLength + i + 1,
+          sub: 0,
+          censorship_id: censorships.length > 0 ? censorships[0].id : "",
+          language: languages.length > 0 ? languages[0].code : "",
+          pages: [],
+        });
+      }
+
+      mergedData.parodies = [...new Set(mergedData.parodies)].join(", ");
+      mergedData.characters = [...new Set(mergedData.characters)].join(", ");
+      mergedData.artists = [...new Set(mergedData.artists)].join(", ");
+      mergedData.groups = [...new Set(mergedData.groups)].join(", ");
+      mergedData.tags = [...new Set(mergedData.tags)].join(", ");
+
       setMetadata((prev) => ({
         ...prev,
-        title: data!.title || "",
-        alternative_title: data!.alternative_title || "",
-        parodies: Array.isArray(data!.parodies)
-          ? data!.parodies.join(", ")
-          : "",
-        characters: Array.isArray(data!.characters)
-          ? data!.characters.join(", ")
-          : "",
-        artists: Array.isArray(data!.artists) ? data!.artists.join(", ") : "",
-        groups: Array.isArray(data!.groups) ? data!.groups.join(", ") : "",
-        tags: Array.isArray(data!.tags) ? data!.tags.join(", ") : "",
+        title: mergedData.title || prev.title,
+        alternative_title:
+          mergedData.alternative_title || prev.alternative_title,
+        parodies: mergedData.parodies || prev.parodies,
+        characters: mergedData.characters || prev.characters,
+        artists: mergedData.artists || prev.artists,
+        groups: mergedData.groups || prev.groups,
+        tags: mergedData.tags || prev.tags,
       }));
 
+      setChapters((prev) => {
+        let currentChapters = [...prev];
+        if (
+          currentChapters.length === 1 &&
+          currentChapters[0].title === "" &&
+          currentChapters[0].pages.length === 0
+        ) {
+          currentChapters = [];
+        }
+        return [...currentChapters, ...newChapters];
+      });
+
       setShowExtractModal(false);
-      setExtractUrl("");
+      setExtractUrls([""]);
 
       toast.success("Metadata extracted successfully!", { id: toastId });
     } catch (error) {
@@ -609,11 +683,6 @@ export default function UploadPageClient({
     } finally {
       setExtracting(false);
     }
-  };
-
-  const handleCloseModal = () => {
-    setShowExtractModal(false);
-    setExtractUrl("");
   };
 
   const handleButtonClick = () => {
@@ -958,11 +1027,14 @@ export default function UploadPageClient({
       {/* Extract Modal */}
       <ExtractModal
         isOpen={showExtractModal}
-        onClose={handleCloseModal}
-        extractUrl={extractUrl}
-        setExtractUrl={setExtractUrl}
+        onClose={() => setShowExtractModal(false)}
+        extractUrls={extractUrls}
+        setExtractUrls={setExtractUrls}
+        scraperCode={scraperCode}
+        setScraperCode={setScraperCode}
         onExtract={handleExtract}
         isExtracting={extracting}
+        scrapers={scrapers}
       />
 
       {/* FIX METADATA MODAL */}

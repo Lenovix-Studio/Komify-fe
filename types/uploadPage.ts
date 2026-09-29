@@ -56,20 +56,20 @@ export type OptionItem = {
 };
 
 export const fields = [
-  { key: "title", label: "Title", placeholder: "Comic Title", required: true },
+  { key: "title", label: "Title", placeholder: "Title", required: true },
   {
     key: "alternative_title",
     label: "Alternative Title",
-    placeholder: "Japanese / Korean Title",
+    placeholder: "Alternative Title",
   },
-  { key: "parodies", label: "Parodies", placeholder: "Solo Leveling, Naruto" },
+  { key: "parodies", label: "Parodies", placeholder: "Parodies" },
   {
     key: "characters",
     label: "Characters",
-    placeholder: "Sung Jin-Woo, Naruto Uzumaki",
+    placeholder: "Characters",
   },
-  { key: "artists", label: "Artists", placeholder: "Redice Studio" },
-  { key: "authors", label: "Authors", placeholder: "Chugong" },
-  { key: "groups", label: "Groups", placeholder: "Scanlation Team" },
-  { key: "tags", label: "Tags", placeholder: "Action, Fantasy, Adventure" },
+  { key: "artists", label: "Artists", placeholder: "Artists" },
+  { key: "authors", label: "Authors", placeholder: "Authors" },
+  { key: "groups", label: "Groups", placeholder: "Groups" },
+  { key: "tags", label: "Tags", placeholder: "Tags" },
 ];

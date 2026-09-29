@@ -47,6 +47,7 @@ export async function publishComicAction(
 
 export async function extractMetadataAction(
   url: string,
+  scraperCode?: string,
 ): Promise<ActionResult> {
   try {
     const response = await fetch(`${BACKEND_URL}/scraper/metadata`, {
@@ -54,7 +55,7 @@ export async function extractMetadataAction(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, scraperCode }),
     });
 
     if (!response.ok) {
