@@ -562,16 +562,42 @@ export default function UploadPageClient({
     setActiveUploadChapterId(null);
     setTempPages([]);
   };
-  const handleAppendPages = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAppendPages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const filesArray = Array.from(files);
+      const toastId = toast.loading("Processing files...");
+      let mappedNewFiles: any[] = [];
 
-      const mappedNewFiles = filesArray.map((file) => ({
-        id: uuidv7(),
-        name: file.name,
-        url: URL.createObjectURL(file),
-      }));
+      for (const file of filesArray) {
+        if (file.name.toLowerCase().match(/\.(pdf|zip|cbz)$/)) {
+          toast.loading(`Extracting ${file.name} on server...`, {
+            id: toastId,
+          });
+          try {
+            const extractedFiles = await extractFileViaScraper(file);
+            for (const extractedFile of extractedFiles) {
+              mappedNewFiles.push({
+                id: uuidv7(),
+                name: extractedFile.name,
+                url: URL.createObjectURL(extractedFile),
+                file: extractedFile,
+              });
+            }
+          } catch (err: any) {
+            toast.error(err.message || "Failed to extract file");
+          }
+        } else {
+          mappedNewFiles.push({
+            id: uuidv7(),
+            name: file.name,
+            url: URL.createObjectURL(file),
+            file: file,
+          });
+        }
+      }
+
+      toast.dismiss(toastId);
       setTempPages((prev) => [...prev, ...mappedNewFiles]);
     }
   };

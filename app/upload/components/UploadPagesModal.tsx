@@ -29,7 +29,9 @@ interface UploadPagesModalProps {
   cancelUploadedPages: () => void;
   saveUploadedPages: () => void;
   removeSingleTempPage: (index: number) => void;
-  handleAppendPages: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleAppendPages: (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => Promise<void>;
 }
 
 export function UploadPagesModal({
@@ -145,7 +147,7 @@ export function UploadPagesModal({
                 <input
                   type="file"
                   id="modal-file-append-input"
-                  accept="image/*,.pdf"
+                  accept="image/*,.pdf,.zip,.cbz"
                   className="hidden"
                   multiple
                   onChange={handleAppendPages}
