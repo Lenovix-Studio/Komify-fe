@@ -90,6 +90,8 @@ export function LoggingTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -211,6 +213,10 @@ export function LoggingTab() {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, levelFilter, sourceFilter]);
+
   const filteredLogs = logs.filter((log) => {
     const matchesSearch = log.message
       .toLowerCase()
@@ -219,6 +225,12 @@ export function LoggingTab() {
     const matchesSource = sourceFilter === "ALL" || log.source === sourceFilter;
     return matchesSearch && matchesLevel && matchesSource;
   });
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const paginatedLogs = filteredLogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   return (
     <div className="space-y-6">
@@ -296,7 +308,7 @@ export function LoggingTab() {
                 value={levelFilter}
                 onValueChange={(val: any) => setLevelFilter(val || "ALL")}
               >
-                <SelectTrigger className="w-[130px] bg-background/50 h-10!">
+                <SelectTrigger className="w-32.5 bg-background/50 h-10!">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -312,7 +324,7 @@ export function LoggingTab() {
                 value={sourceFilter}
                 onValueChange={(val: any) => setSourceFilter(val || "ALL")}
               >
-                <SelectTrigger className="w-[140px] bg-background/50 h-10!">
+                <SelectTrigger className="w-35 bg-background/50 h-10!">
                   <SelectValue placeholder="Source" />
                 </SelectTrigger>
                 <SelectContent>
@@ -329,9 +341,9 @@ export function LoggingTab() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead className="w-[180px]">Timestamp</TableHead>
-                  <TableHead className="w-[100px]">Level</TableHead>
-                  <TableHead className="w-[120px]">Source</TableHead>
+                  <TableHead className="w-45">Timestamp</TableHead>
+                  <TableHead className="w-25">Level</TableHead>
+                  <TableHead className="w-30">Source</TableHead>
                   <TableHead>Message</TableHead>
                 </TableRow>
               </TableHeader>
@@ -346,7 +358,7 @@ export function LoggingTab() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLogs.map((log) => (
+                  paginatedLogs.map((log) => (
                     <TableRow
                       key={log.id}
                       className="cursor-pointer hover:bg-muted/30 transition-colors"
@@ -358,7 +370,7 @@ export function LoggingTab() {
                       <TableCell>{getLevelBadge(log.level)}</TableCell>
                       <TableCell>{getSourceBadge(log.source)}</TableCell>
                       <TableCell
-                        className="font-medium truncate max-w-[300px]"
+                        className="font-medium truncate max-w-75"
                         title={log.message}
                       >
                         {log.message}
@@ -369,6 +381,35 @@ export function LoggingTab() {
               </TableBody>
             </Table>
           </div>
+          {filteredLogs.length > 0 && (
+            <div className="flex items-center justify-between px-2 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of{" "}
+                {filteredLogs.length} logs
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

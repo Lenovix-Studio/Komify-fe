@@ -19,11 +19,8 @@ interface ExtractModalProps {
   onClose: () => void;
   extractUrls: string[];
   setExtractUrls: React.Dispatch<React.SetStateAction<string[]>>;
-  scraperCode: string;
-  setScraperCode: (code: string) => void;
   onExtract: () => void;
   isExtracting: boolean;
-  scrapers: { code: string; name: string }[];
 }
 
 export function ExtractModal({
@@ -31,11 +28,8 @@ export function ExtractModal({
   onClose,
   extractUrls,
   setExtractUrls,
-  scraperCode,
-  setScraperCode,
   onExtract,
   isExtracting,
-  scrapers,
 }: ExtractModalProps) {
   const addUrl = () => {
     setExtractUrls((prev) => [...prev, ""]);
@@ -62,31 +56,12 @@ export function ExtractModal({
             Extract Comic Metadata
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm text-zinc-500">
-            Select a scraper and paste source URLs to automatically extract
-            comic information.
+            Paste source URLs to automatically extract comic information.
           </DialogDescription>
         </DialogHeader>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-5 max-h-[60vh] overflow-y-auto">
-          {/* Scraper Select */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-zinc-700">
-              Scraper Source
-            </Label>
-            <select
-              value={scraperCode}
-              onChange={(e) => setScraperCode(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-            >
-              {scrapers.map((s) => (
-                <option key={s.code} value={s.code}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-zinc-700">
               Source URLs

@@ -60,7 +60,6 @@ type UploadPageClientProps = {
   censorships: Censorship[];
   languages: Language[];
   templates: { code: string; name: string }[];
-  scrapers: { code: string; name: string }[];
 };
 
 export default function UploadPageClient({
@@ -68,7 +67,6 @@ export default function UploadPageClient({
   censorships,
   languages,
   templates,
-  scrapers,
 }: UploadPageClientProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -88,9 +86,6 @@ export default function UploadPageClient({
   const [extractUrls, setExtractUrls] = useState<string[]>([""]);
   const [extracting, setExtracting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [scraperCode, setScraperCode] = useState<string>(
-    scrapers.length > 0 ? scrapers[0].code : "",
-  );
   const [activeUploadChapterId, setActiveUploadChapterId] = useState<
     string | null
   >(null);
@@ -657,7 +652,7 @@ export default function UploadPageClient({
 
       for (let i = 0; i < validUrls.length; i++) {
         const url = validUrls[i].trim();
-        const result = await extractMetadataAction(url, scraperCode);
+        const result = await extractMetadataAction(url);
         if (!result.success || !result.data) {
           throw new Error(
             result.message || `Failed to extract metadata from ${url}`,
@@ -711,14 +706,13 @@ export default function UploadPageClient({
 
       setMetadata((prev) => ({
         ...prev,
-        title: mergedData.title || prev.title,
-        alternative_title:
-          mergedData.alternative_title || prev.alternative_title,
-        parodies: mergedData.parodies || prev.parodies,
-        characters: mergedData.characters || prev.characters,
-        artists: mergedData.artists || prev.artists,
-        groups: mergedData.groups || prev.groups,
-        tags: mergedData.tags || prev.tags,
+        title: mergedData.title,
+        alternative_title: mergedData.alternative_title,
+        parodies: mergedData.parodies,
+        characters: mergedData.characters,
+        artists: mergedData.artists,
+        groups: mergedData.groups,
+        tags: mergedData.tags,
       }));
 
       setChapters((prev) => {
@@ -1091,11 +1085,8 @@ export default function UploadPageClient({
         onClose={() => setShowExtractModal(false)}
         extractUrls={extractUrls}
         setExtractUrls={setExtractUrls}
-        scraperCode={scraperCode}
-        setScraperCode={setScraperCode}
         onExtract={handleExtract}
         isExtracting={extracting}
-        scrapers={scrapers}
       />
 
       {/* FIX METADATA MODAL */}
