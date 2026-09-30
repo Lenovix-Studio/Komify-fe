@@ -29,22 +29,54 @@ export default function ChapterReaderContent({
   initialAllChapters: { id: string; chapter_number: string }[];
 }) {
   const router = useRouter();
-  const chapter = initialChapter;
+  const [chapter, setChapter] = useState(initialChapter);
+  useEffect(() => {
+    setChapter(initialChapter);
+  }, [initialChapter]);
 
   const allChapters = initialAllChapters;
-  const [chapterInput, setChapterInput] = useState(
-    initialChapter.chapter_number,
-  );
   const [zoom, setZoom] = useState(80);
+  const [viewMode, setViewMode] = useState<"original" | "translated">(
+    "original",
+  );
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [rotations, setRotations] = useState<Record<string, number>>({});
+  const [chapterInput, setChapterInput] = useState(
+    initialChapter.chapter_number,
+  );
 
   const handleRotate = (id: string) => {
     setRotations((prev) => ({
       ...prev,
       [id]: ((prev[id] || 0) + 90) % 360,
     }));
+  };
+
+  const handleTranslate = async () => {
+    try {
+      setIsTranslating(true);
+      toast.info("Memulai proses terjemahan (AI) di latar belakang...");
+
+      const res = await fetch(
+        `${BACKEND_URL}/chapters/${chapterId}/translate`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!res.ok) throw new Error("Gagal memulai terjemahan");
+
+      toast.success(
+        "Terjemahan sedang berjalan! Silakan refresh beberapa saat lagi.",
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal memulai terjemahan");
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -163,6 +195,13 @@ export default function ChapterReaderContent({
 
           {/* Right Side: Action Button */}
           <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={handleTranslate}
+              disabled={isTranslating}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-600 disabled:opacity-50"
+            >
+              {isTranslating ? "Proses..." : "Translate AI"}
+            </button>
             <Link
               href={`/comic/${slug}/chapter/${chapterId}/edit`}
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -185,7 +224,12 @@ export default function ChapterReaderContent({
             >
               <div className="relative">
                 <RotatableImage
-                  src={`${BACKEND_URL}${page.filepath}`}
+                  src={`${BACKEND_URL}${
+                    viewMode === "translated" &&
+                    (page as any).translated_filepath
+                      ? (page as any).translated_filepath
+                      : page.filepath
+                  }`}
                   alt={`Page ${page.page_number}`}
                   rotation={rotations[page.id] || 0}
                   className="h-auto w-full transition-opacity duration-300"
@@ -265,6 +309,28 @@ export default function ChapterReaderContent({
               >
                 <path d="m6 9 6 6 6-6" />
               </svg>
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
+            <button
+              onClick={() => setViewMode("original")}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                viewMode === "original"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              Original
+            </button>
+            <button
+              onClick={() => setViewMode("translated")}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                viewMode === "translated"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              Translated
             </button>
           </div>
           <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
