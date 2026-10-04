@@ -4,32 +4,24 @@ import { notFound } from "next/navigation";
 import { BACKEND_URL } from "@/lib/constant";
 import ChapterEditContent from "./content";
 
-export default async function EditChapterPage({
-  params,
-}: {
-  params: Promise<{ slug: string; chapter: string }>;
-}) {
-  const { slug, chapter: chapterId } = await params;
+async function getChapterWithMetadata(chapterId: string) {
+  const [chapterRes, typesRes, detailsRes] = await Promise.all([
+    fetch(`${BACKEND_URL}/chapters/${chapterId}`, {
+      cache: "no-store",
+    }),
+    fetch(`${BACKEND_URL}/common-code/types`, { cache: "no-store" }),
+    fetch(`${BACKEND_URL}/common-code/details`, { cache: "no-store" }),
+  ]);
 
-  let chapterData = null;
+  if (!chapterRes.ok) {
+    return null;
+  }
+
+  const chapterData = await chapterRes.json();
   let languages: any[] = [];
   let censorships: any[] = [];
 
   try {
-    const [chapterRes, typesRes, detailsRes] = await Promise.all([
-      fetch(`${BACKEND_URL}/comics/${slug}/chapters/${chapterId}`, {
-        cache: "no-store",
-      }),
-      fetch(`${BACKEND_URL}/common-code/types`, { cache: "no-store" }),
-      fetch(`${BACKEND_URL}/common-code/details`, { cache: "no-store" }),
-    ]);
-
-    if (!chapterRes.ok) {
-      return notFound();
-    }
-
-    chapterData = await chapterRes.json();
-
     if (typesRes.ok && detailsRes.ok) {
       const types = await typesRes.json();
       const details = await detailsRes.json();
@@ -60,17 +52,38 @@ export default async function EditChapterPage({
       }
     }
   } catch (error) {
-    console.error("Failed to fetch chapter data", error);
-    return notFound();
+    console.error("Failed to fetch types/details", error);
   }
 
-  return (
-    <ChapterEditContent
-      slug={slug}
-      chapterId={chapterId}
-      initialChapterData={chapterData}
-      languages={languages}
-      censorships={censorships}
-    />
-  );
+  return { chapterData, languages, censorships };
+}
+
+export default async function EditChapterPage({
+  params,
+}: {
+  params: Promise<{ slug: string; chapter: string }>;
+}) {
+  const { slug, chapter: chapterId } = await params;
+
+  try {
+    const result = await getChapterWithMetadata(chapterId);
+    if (!result) {
+      return notFound();
+    }
+
+    const { chapterData, languages, censorships } = result;
+
+    return (
+      <ChapterEditContent
+        slug={slug}
+        chapterId={chapterId}
+        initialChapterData={chapterData}
+        languages={languages}
+        censorships={censorships}
+      />
+    );
+  } catch (error) {
+    console.error("Failed to load edit chapter page", error);
+    return notFound();
+  }
 }

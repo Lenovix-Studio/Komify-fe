@@ -70,7 +70,7 @@ export default function ChapterEditContent({
   const [chapterMetadata, setChapterMetadata] = useState({
     title: initialChapterData?.title || "",
     censorship_id:
-      censorships.find((c) => c.name === initialChapterData?.censorship?.name)
+      censorships.find((c) => c.id === initialChapterData?.censorship?.id)
         ?.id ||
       censorships[0]?.id ||
       "",
@@ -197,12 +197,12 @@ export default function ChapterEditContent({
       prev.map((page) =>
         page.id === pageId
           ? {
-              ...page,
-              file,
-              filename: file.name,
-              url: URL.createObjectURL(file),
-              isReplaced: true,
-            }
+            ...page,
+            file,
+            filename: file.name,
+            url: URL.createObjectURL(file),
+            isReplaced: true,
+          }
           : page,
       ),
     );
@@ -393,7 +393,7 @@ export default function ChapterEditContent({
                 </span>
 
                 <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-300">
-                  #{chapterData?.chapter.chapter_number || "-"}
+                  #{chapterData?.chapter_number || "-"}
                 </span>
               </div>
             </div>
@@ -577,8 +577,7 @@ export default function ChapterEditContent({
               <h2 className="text-lg font-bold text-white">Chapter Pages</h2>
 
               <p className="mt-1 text-xs text-zinc-500">
-                {chapterData?.chapter.total_pages || pages.length} pages
-                uploaded
+                {pages.length} pages uploaded
               </p>
             </div>
 
@@ -690,10 +689,9 @@ const SortablePageCard = React.memo(function SortablePageCard({
       className={`
         group relative overflow-hidden rounded-2xl border bg-zinc-950
         will-change-transform select-none
-        ${
-          isDragging
-            ? "z-50 border-indigo-500 ring-2 ring-indigo-500/30"
-            : "border-zinc-800 hover:border-indigo-500/40"
+        ${isDragging
+          ? "z-50 border-indigo-500 ring-2 ring-indigo-500/30"
+          : "border-zinc-800 hover:border-indigo-500/40"
         }
       `}
     >
@@ -743,10 +741,9 @@ const SortablePageCard = React.memo(function SortablePageCard({
       {/* Overlay */}
       <div
         className={`absolute inset-0 flex items-end justify-between gap-2 p-3 transition-opacity duration-150
-          ${
-            isDragging
-              ? "bg-black/20 opacity-100"
-              : "bg-black/40 opacity-0 group-hover:opacity-100"
+          ${isDragging
+            ? "bg-black/20 opacity-100"
+            : "bg-black/40 opacity-0 group-hover:opacity-100"
           }
         `}
       >

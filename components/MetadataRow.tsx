@@ -2,17 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-export type MetadataType = "author" | "genre" | "tag" | string;
+import { MetadataType } from "@/lib/constant";
 
 export const metadataQueryMap: Record<string, string> = {
-  genre: "genre",
-  author: "author",
+  parody: "parodies",
+  character: "characters",
+  author: "authors",
+  artist: "artists",
+  group: "groups",
+  tag: "tags",
 };
 
 export const metadataStyles: Record<string, string> = {
-  genre: "bg-primary/5 text-primary border-primary/20 hover:bg-primary/10",
-  author: "bg-muted text-muted-foreground border-border hover:bg-accent",
+  parody: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
+  character: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
+  author: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
+  artist: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
+  group: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
+  tag: "border-slate-200 bg-slate-100/80 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700",
 };
 
 export interface MetadataRowProps {
@@ -33,11 +40,12 @@ export function MetadataRow({ item, isLast }: MetadataRowProps) {
     ? item.values
     : item.values.slice(0, INITIAL_LIMIT);
 
+  const queryKey = metadataQueryMap[item.type] || item.type;
+
   return (
     <div
-      className={`grid items-start gap-3 px-4 py-3 sm:px-5 lg:grid-cols-[110px_1fr] ${
-        !isLast ? "border-b border-border/50" : ""
-      }`}
+      className={`grid items-start gap-3 px-4 py-3 sm:px-5 lg:grid-cols-[110px_1fr] ${!isLast ? "border-b border-border/50" : ""
+        }`}
     >
       <div className="pt-1">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -49,12 +57,11 @@ export function MetadataRow({ item, isLast }: MetadataRowProps) {
         {displayedValues.map((value) => (
           <Link
             key={value.id}
-            href={`/?${metadataQueryMap[item.type]}=${encodeURIComponent(
+            href={`/?${queryKey}=${encodeURIComponent(
               value.slug || value.name,
             )}`}
-            className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-              metadataStyles[item.type] || ""
-            }`}
+            className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${metadataStyles[item.type] || ""
+              }`}
           >
             {value.name}
           </Link>
