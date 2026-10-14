@@ -1,11 +1,18 @@
 import Link from "next/link";
-import { ArrowLeft, Code2, Settings2, Activity } from "lucide-react";
+import {
+  ArrowLeft,
+  Code2,
+  Settings2,
+  Activity,
+  LayoutDashboard,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CommonCodeTab } from "./common-code-tab";
 import { ResetSystemCard } from "./reset-system-card";
 import { LoggingTab } from "./logging-tab";
+import { DashboardTab } from "./dashboard-tab";
 
 export const metadata = {
   title: "Settings",
@@ -37,8 +44,15 @@ export default function SettingsPage() {
       />
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <Tabs defaultValue="logging" className="w-full space-y-6">
+        <Tabs defaultValue="dashboard" className="w-full space-y-6">
           <TabsList className="inline-flex h-12 items-center justify-start rounded-2xl bg-muted/60 p-1.5 text-muted-foreground">
+            <TabsTrigger
+              value="dashboard"
+              className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Dashboard</span>
+            </TabsTrigger>
             <TabsTrigger
               value="logging"
               className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
@@ -61,6 +75,10 @@ export default function SettingsPage() {
               <span>Other</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="focus-visible:outline-none">
+            <DashboardTab />
+          </TabsContent>
 
           <TabsContent value="logging" className="focus-visible:outline-none">
             <LoggingTab />
