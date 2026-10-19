@@ -553,7 +553,6 @@ export default function UploadPageClient({
     setTempPages([]);
   };
   const cancelUploadedPages = () => {
-    tempPages.forEach((p) => URL.revokeObjectURL(p.url));
     setActiveUploadChapterId(null);
     setTempPages([]);
   };

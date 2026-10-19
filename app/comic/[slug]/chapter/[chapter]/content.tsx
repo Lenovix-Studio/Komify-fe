@@ -126,6 +126,41 @@ export default function ChapterReaderContent({
     return "max-w-4xl";
   };
 
+  const handleZoomChange = (newZoom: number) => {
+    const pageElements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-page-id]"),
+    );
+    let targetEl: HTMLElement | null = null;
+    let minDiff = Infinity;
+
+    for (const el of pageElements) {
+      const rect = el.getBoundingClientRect();
+      const diff = Math.abs(rect.top);
+      if (diff < minDiff) {
+        minDiff = diff;
+        targetEl = el;
+      }
+    }
+
+    const targetId = targetEl?.getAttribute("data-page-id");
+    const initialOffset = targetEl ? targetEl.getBoundingClientRect().top : 0;
+
+    setZoom(newZoom);
+
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.querySelector(`[data-page-id="${targetId}"]`);
+        if (el) {
+          const newRect = el.getBoundingClientRect();
+          window.scrollBy({
+            top: newRect.top - initialOffset,
+            behavior: "instant" as ScrollBehavior,
+          });
+        }
+      }, 50);
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -220,6 +255,7 @@ export default function ChapterReaderContent({
           {chapter.pages.map((page) => (
             <div
               key={page.id}
+              data-page-id={page.id}
               className="group relative overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm"
             >
               <div className="relative">
@@ -336,7 +372,7 @@ export default function ChapterReaderContent({
           <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-card/90 p-1.5 shadow-lg backdrop-blur-md">
             <div className="flex items-center">
               <button
-                onClick={() => setZoom((prev) => Math.max(60, prev - 20))}
+                onClick={() => handleZoomChange(Math.max(60, zoom - 20))}
                 disabled={zoom <= 60}
                 className={`flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all ${
                   zoom > 60
@@ -353,7 +389,7 @@ export default function ChapterReaderContent({
               </span>
 
               <button
-                onClick={() => setZoom((prev) => Math.min(100, prev + 20))}
+                onClick={() => handleZoomChange(Math.min(100, zoom + 20))}
                 disabled={zoom >= 100}
                 className={`flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all ${
                   zoom < 100

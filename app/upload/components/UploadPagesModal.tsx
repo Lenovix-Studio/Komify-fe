@@ -48,7 +48,6 @@ export function UploadPagesModal({
   const isOpen = !!activeUploadChapterId;
 
   const handleClearAll = () => {
-    tempPages.forEach((p) => URL.revokeObjectURL(p.url));
     setTempPages([]);
   };
 
