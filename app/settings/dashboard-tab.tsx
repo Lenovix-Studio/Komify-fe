@@ -21,10 +21,17 @@ import {
   RefreshCw,
   BarChart3,
   Star,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 
 interface StatusStat {
+  name: string;
+  count: number;
+}
+
+interface LanguageStat {
+  code: string;
   name: string;
   count: number;
 }
@@ -44,6 +51,7 @@ interface RatingStats {
 interface DashboardStats {
   totalComics: number;
   statuses: StatusStat[];
+  languages?: LanguageStat[];
   ratings?: RatingStats;
 }
 
@@ -234,7 +242,7 @@ export function DashboardTab() {
       </div>
 
       {/* Breakdown Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Status Breakdown */}
         <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
           <CardHeader>
@@ -273,6 +281,61 @@ export function DashboardTab() {
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Language Breakdown */}
+        <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold flex items-center justify-between">
+              <span>Language Breakdown</span>
+              <Globe className="h-4 w-4 text-sky-400" />
+            </CardTitle>
+            <CardDescription>
+              Distribusi bahasa chapter dalam sistem
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {!stats?.languages || stats.languages.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  Belum ada data bahasa chapter
+                </div>
+              ) : (
+                stats.languages.map((lang) => {
+                  const totalChapters =
+                    stats.languages?.reduce((acc, l) => acc + l.count, 0) || 1;
+                  const percentage = Math.round(
+                    (lang.count / totalChapters) * 100,
+                  );
+
+                  return (
+                    <div key={lang.code} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{lang.name}</span>
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-mono uppercase"
+                          >
+                            {lang.count} ch
+                          </Badge>
+                        </div>
+                        <span className="text-muted-foreground text-xs">
+                          {percentage}%
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full bg-sky-400 transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </CardContent>
         </Card>
