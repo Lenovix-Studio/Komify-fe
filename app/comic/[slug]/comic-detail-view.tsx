@@ -92,9 +92,11 @@ export function ComicDetailView({
 
   const [comic, setComic] = useState<ComicMetadata>(initialComic);
   const [chapters, setChapters] = useState<ComicChapter[]>(initialChapters);
+  const [cacheKey, setCacheKey] = useState<string>("");
 
   useEffect(() => {
     setComic(initialComic);
+    setCacheKey(String(Date.now()));
   }, [initialComic]);
 
   useEffect(() => {
@@ -405,7 +407,7 @@ export function ComicDetailView({
                   >
                     {comic.cover_path ? (
                       <img
-                        src={`${BACKEND_URL}${comic.cover_path}?t=${Date.now()}`}
+                        src={`${BACKEND_URL}${comic.cover_path}${cacheKey ? `?t=${cacheKey}` : ""}`}
                         alt={comic.title}
                         loading="eager"
                         className="w-full h-auto object-contain max-h-[600px]"
