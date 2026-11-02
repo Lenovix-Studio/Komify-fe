@@ -14,11 +14,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+export interface ExtractItem {
+  url: string;
+  main: number;
+  sub: number;
+  title: string;
+}
+
 interface ExtractModalProps {
   isOpen: boolean;
   onClose: () => void;
-  extractUrls: string[];
-  setExtractUrls: React.Dispatch<React.SetStateAction<string[]>>;
+  extractItems: ExtractItem[];
+  setExtractItems: React.Dispatch<React.SetStateAction<ExtractItem[]>>;
   onExtract: () => void;
   isExtracting: boolean;
 }
@@ -26,66 +33,127 @@ interface ExtractModalProps {
 export function ExtractModal({
   isOpen,
   onClose,
-  extractUrls,
-  setExtractUrls,
+  extractItems,
+  setExtractItems,
   onExtract,
   isExtracting,
 }: ExtractModalProps) {
-  const addUrl = () => {
-    setExtractUrls((prev) => [...prev, ""]);
+  const addItem = () => {
+    setExtractItems((prev) => {
+      const nextMain = prev.length > 0 ? prev[prev.length - 1].main + 1 : 1;
+      return [
+        ...prev,
+        {
+          url: "",
+          main: nextMain,
+          sub: 0,
+          title: "",
+        },
+      ];
+    });
   };
 
-  const removeUrl = (index: number) => {
-    setExtractUrls((prev) => prev.filter((_, i) => i !== index));
+  const removeItem = (index: number) => {
+    setExtractItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateUrl = (index: number, value: string) => {
-    setExtractUrls((prev) => {
-      const newUrls = [...prev];
-      newUrls[index] = value;
-      return newUrls;
+  const updateItem = (index: number, field: keyof ExtractItem, value: any) => {
+    setExtractItems((prev) => {
+      const newItems = [...prev];
+      newItems[index] = {
+        ...newItems[index],
+        [field]: value,
+      };
+      return newItems;
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg rounded-3xl border border-zinc-100 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.06)] gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl rounded-3xl border border-zinc-100 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.06)] gap-0 overflow-hidden">
         {/* Header */}
         <DialogHeader className="border-b border-zinc-100 px-6 py-5 text-left">
           <DialogTitle className="text-xl font-bold text-zinc-900 tracking-tight">
             Extract Comic Metadata
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm text-zinc-500">
-            Paste source URLs to automatically extract comic information.
+            Paste source URLs and specify chapter details to automatically
+            extract comic information.
           </DialogDescription>
         </DialogHeader>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-5 max-h-[60vh] overflow-y-auto">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label className="text-sm font-semibold text-zinc-700">
-              Source URLs
+              Source URLs & Chapter Details
             </Label>
-            <div className="space-y-3">
-              {extractUrls.map((url, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    type="url"
-                    value={url}
-                    onChange={(e) => updateUrl(i, e.target.value)}
-                    placeholder="https://example.com/comic/123"
-                    className="flex-1 h-auto rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition focus-visible:border-indigo-500 focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-indigo-500/10"
-                  />
-                  {extractUrls.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => removeUrl(i)}
-                      className="h-11 w-11 shrink-0 rounded-2xl text-zinc-400 hover:text-red-500 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+
+            <div className="space-y-3.5">
+              {extractItems.map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3.5 space-y-2.5 transition-all focus-within:border-indigo-400 focus-within:bg-white"
+                >
+                  {/* Top row: Chapter Main.Sub + Chapter Title + Delete Button */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs font-semibold text-zinc-600">
+                        Ch
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.main}
+                        onChange={(e) =>
+                          updateItem(i, "main", Number(e.target.value))
+                        }
+                        className="h-10 w-16 rounded-xl border border-zinc-200 bg-white px-2 text-center text-sm font-bold text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                      />
+                      <span className="font-bold text-zinc-400">.</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.sub}
+                        onChange={(e) =>
+                          updateItem(i, "sub", Number(e.target.value))
+                        }
+                        className="h-10 w-14 rounded-xl border border-zinc-200 bg-white px-2 text-center text-sm font-bold text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                      />
+                    </div>
+
+                    <Input
+                      type="text"
+                      value={item.title}
+                      onChange={(e) => updateItem(i, "title", e.target.value)}
+                      placeholder="Chapter Title (Optional)"
+                      className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                    />
+
+                    {extractItems.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(i)}
+                        className="h-10 w-10 shrink-0 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                        title="Remove URL"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Bottom row: URL input with fixed height */}
+                  <div>
+                    <Input
+                      type="url"
+                      value={item.url}
+                      onChange={(e) => updateItem(i, "url", e.target.value)}
+                      placeholder="https://example.com/comic/123"
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -93,7 +161,7 @@ export function ExtractModal({
             <Button
               type="button"
               variant="outline"
-              onClick={addUrl}
+              onClick={addItem}
               className="w-full mt-2 h-11 rounded-2xl border-dashed border-2 border-zinc-200 text-zinc-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50"
             >
               <Plus className="h-4 w-4 mr-2" />

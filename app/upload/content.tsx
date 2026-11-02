@@ -54,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChapterListSection } from "./components/ChapterListSection";
+import { ExtractItem } from "./components/ExtractModal";
 
 type UploadPageClientProps = {
   statuses: Status[];
@@ -83,7 +84,9 @@ export default function UploadPageClient({
   const [savedZoom, setSavedZoom] = useState(1);
   const [tempPages, setTempPages] = useState<TempPage[]>([]);
   const [showExtractModal, setShowExtractModal] = useState(false);
-  const [extractUrls, setExtractUrls] = useState<string[]>([""]);
+  const [extractItems, setExtractItems] = useState<ExtractItem[]>([
+    { url: "", main: 1, sub: 0, title: "" },
+  ]);
   const [extracting, setExtracting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [activeUploadChapterId, setActiveUploadChapterId] = useState<
@@ -627,30 +630,35 @@ export default function UploadPageClient({
 
   // EXTRACT METADATA FROM URL
   const handleExtract = async () => {
-    const validUrls = extractUrls.filter((u) => u.trim() !== "");
-    if (validUrls.length === 0) {
+    const validItems = extractItems.filter((item) => item.url.trim() !== "");
+    if (validItems.length === 0) {
       toast.error("Please enter at least one valid URL");
       return;
     }
 
-    const toastId = toast.loading("Extracting metadata...");
+    const toastId = toast.loading(
+      validItems.length > 1
+        ? `Extracting metadata (1/${validItems.length})...`
+        : "Extracting metadata...",
+    );
 
     try {
       setExtracting(true);
 
       let mergedData: any = {};
       const newChapters: Chapter[] = [];
-      let baseLength = chapters.length;
-      if (
-        chapters.length === 1 &&
-        chapters[0].title === "" &&
-        chapters[0].pages.length === 0
-      ) {
-        baseLength = 0;
-      }
 
-      for (let i = 0; i < validUrls.length; i++) {
-        const url = validUrls[i].trim();
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+        const url = item.url.trim();
+
+        if (validItems.length > 1) {
+          toast.loading(
+            `Extracting metadata (${i + 1}/${validItems.length})...`,
+            { id: toastId },
+          );
+        }
+
         const result = await extractMetadataAction(url);
         if (!result.success || !result.data) {
           throw new Error(
@@ -684,13 +692,13 @@ export default function UploadPageClient({
           if (Array.isArray(data.tags)) mergedData.tags.push(...data.tags);
         }
 
-        const chapTitle = url;
+        const chapTitle = item.title.trim() || data.title || url;
 
         newChapters.push({
           id: crypto.randomUUID(),
           title: chapTitle,
-          main: baseLength + i + 1,
-          sub: 0,
+          main: item.main,
+          sub: item.sub,
           censorship_id: censorships.length > 0 ? censorships[0].id : "",
           language: languages.length > 0 ? languages[0].code : "",
           pages: [],
@@ -727,7 +735,7 @@ export default function UploadPageClient({
       });
 
       setShowExtractModal(false);
-      setExtractUrls([""]);
+      setExtractItems([{ url: "", main: 1, sub: 0, title: "" }]);
 
       toast.success("Metadata extracted successfully!", { id: toastId });
     } catch (error) {
@@ -1082,8 +1090,8 @@ export default function UploadPageClient({
       <ExtractModal
         isOpen={showExtractModal}
         onClose={() => setShowExtractModal(false)}
-        extractUrls={extractUrls}
-        setExtractUrls={setExtractUrls}
+        extractItems={extractItems}
+        setExtractItems={setExtractItems}
         onExtract={handleExtract}
         isExtracting={extracting}
       />
