@@ -20,6 +20,7 @@ import {
   ExternalLink,
   RefreshCw,
   BarChart3,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,9 +29,22 @@ interface StatusStat {
   count: number;
 }
 
+interface StarBreakdown {
+  stars: number;
+  count: number;
+}
+
+interface RatingStats {
+  averageScore: number;
+  totalVotes: number;
+  ratedComicsCount: number;
+  breakdown: StarBreakdown[];
+}
+
 interface DashboardStats {
   totalComics: number;
   statuses: StatusStat[];
+  ratings?: RatingStats;
 }
 
 const statusColorMap: Record<string, { bg: string; text: string; icon: any }> =
@@ -99,7 +113,7 @@ export function DashboardTab() {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -126,6 +140,50 @@ export function DashboardTab() {
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rating Overview Card */}
+        <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Rata-rata Rating
+            </CardTitle>
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold">
+                {loading
+                  ? "..."
+                  : (stats?.ratings?.averageScore || 0).toFixed(1)}
+              </span>
+              <span className="text-sm font-semibold text-muted-foreground">
+                / 5.0
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {loading
+                ? "Memuat..."
+                : `${stats?.ratings?.totalVotes || 0} total ulasan (${stats?.ratings?.ratedComicsCount || 0} komik)`}
+            </p>
+            <div className="mt-4">
+              <div className="flex items-center gap-1 text-xs text-amber-500 font-medium">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-3.5 w-3.5 ${
+                      i < Math.round(stats?.ratings?.averageScore || 0)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-muted-foreground/30"
+                    }`}
+                  />
+                ))}
+                <span className="ml-1 text-[11px] text-muted-foreground">
+                  Skor Sistem
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -175,45 +233,101 @@ export function DashboardTab() {
         })}
       </div>
 
-      {/* Summary Table Card */}
-      <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            Status Breakdown
-          </CardTitle>
-          <CardDescription>
-            Rincian komik beserta persentase dari total komik
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {stats?.statuses.map((status) => {
-              const total = stats.totalComics || 1;
-              const percentage = Math.round((status.count / total) * 100);
+      {/* Breakdown Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Status Breakdown */}
+        <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              Status Breakdown
+            </CardTitle>
+            <CardDescription>
+              Rincian komik beserta persentase dari total komik
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stats?.statuses.map((status) => {
+                const total = stats.totalComics || 1;
+                const percentage = Math.round((status.count / total) * 100);
 
-              return (
-                <div key={status.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{status.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {status.count} komik
-                      </Badge>
+                return (
+                  <div key={status.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{status.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {status.count} komik
+                        </Badge>
+                      </div>
+                      <span className="text-muted-foreground">
+                        {percentage}%
+                      </span>
                     </div>
-                    <span className="text-muted-foreground">{percentage}%</span>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full bg-primary transition-all duration-500"
-                      style={{ width: `${percentage}%` }}
-                    />
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rating Breakdown */}
+        <Card className="rounded-2xl border-border/80 bg-card/60 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              Rating Breakdown
+            </CardTitle>
+            <CardDescription>
+              Distribusi komik berdasarkan jumlah bintang (1 - 5 Bintang)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stats?.ratings?.breakdown.map((item) => {
+                const totalRated = stats.ratings?.ratedComicsCount || 1;
+                const percentage =
+                  stats.ratings?.ratedComicsCount &&
+                  stats.ratings.ratedComicsCount > 0
+                    ? Math.round((item.count / totalRated) * 100)
+                    : 0;
+
+                return (
+                  <div key={item.stars} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 font-medium text-xs">
+                          <span className="w-4 text-center font-bold">
+                            {item.stars}
+                          </span>
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {item.count} komik
+                        </Badge>
+                      </div>
+                      <span className="text-muted-foreground text-xs">
+                        {percentage}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-amber-400 transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
