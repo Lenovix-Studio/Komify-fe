@@ -91,6 +91,7 @@ export function ComicDetailView({
   const [comic] = useState<ComicMetadata>(initialComic);
   const [chapters, setChapters] = useState<ComicChapter[]>(initialChapters);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<"latest" | "az">("latest");
   const [isOrderingMode, setIsOrderingMode] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
@@ -185,13 +186,31 @@ export function ComicDetailView({
     };
   }, [selectedChapter]);
 
-  // Pagination Logic
   const CHAPTERS_PER_PAGE = 7;
+  const sortedChapters = [...chapters].sort((a, b) => {
+    if (sortOrder === "az") {
+      return (a.title || a.chapter_number).localeCompare(
+        b.title || b.chapter_number,
+        undefined,
+        { numeric: true, sensitivity: "base" },
+      );
+    }
+    const dateA = a.published_at ? new Date(a.published_at).getTime() : 0;
+    const dateB = b.published_at ? new Date(b.published_at).getTime() : 0;
+    if (dateA !== dateB) return dateB - dateA;
+    return (b.chapter_number || "").localeCompare(
+      a.chapter_number || "",
+      undefined,
+      { numeric: true, sensitivity: "base" },
+    );
+  });
+
+  const displayChapters = isOrderingMode ? chapters : sortedChapters;
   const totalPages = Math.max(
     1,
-    Math.ceil(chapters.length / CHAPTERS_PER_PAGE),
+    Math.ceil(displayChapters.length / CHAPTERS_PER_PAGE),
   );
-  const paginatedChapters = chapters.slice(
+  const paginatedChapters = displayChapters.slice(
     (currentPage - 1) * CHAPTERS_PER_PAGE,
     currentPage * CHAPTERS_PER_PAGE,
   );
@@ -200,7 +219,7 @@ export function ComicDetailView({
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
-  }, [chapters, currentPage, totalPages]);
+  }, [displayChapters, currentPage, totalPages]);
 
   const handleDeleteComic = async () => {
     if (!comic?.id) return;
@@ -640,9 +659,15 @@ export function ComicDetailView({
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 pointer-events-none" />
             </div>
 
-            <button className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card px-4 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary/40 hover:bg-accent/60 active:scale-95 shadow-xs">
+            <button
+              onClick={() => {
+                setSortOrder((prev) => (prev === "latest" ? "az" : "latest"));
+                setCurrentPage(1);
+              }}
+              className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card px-4 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary/40 hover:bg-accent/60 active:scale-95 shadow-xs"
+            >
               <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <span>Latest First</span>
+              <span>{sortOrder === "latest" ? "Terbaru" : "A-Z"}</span>
             </button>
           </div>
         </div>
