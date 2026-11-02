@@ -91,6 +91,7 @@ export function ComicDetailView({
   const [comic] = useState<ComicMetadata>(initialComic);
   const [chapters, setChapters] = useState<ComicChapter[]>(initialChapters);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"latest" | "az">("latest");
   const [isOrderingMode, setIsOrderingMode] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -187,7 +188,16 @@ export function ComicDetailView({
   }, [selectedChapter]);
 
   const CHAPTERS_PER_PAGE = 7;
-  const sortedChapters = [...chapters].sort((a, b) => {
+  const filteredChapters = chapters.filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      (c.chapter_number && c.chapter_number.toLowerCase().includes(q)) ||
+      (c.title && c.title.toLowerCase().includes(q))
+    );
+  });
+
+  const sortedChapters = [...filteredChapters].sort((a, b) => {
     if (sortOrder === "az") {
       return (a.title || a.chapter_number).localeCompare(
         b.title || b.chapter_number,
@@ -653,8 +663,14 @@ export function ComicDetailView({
             <div className="relative flex-1 sm:w-64 sm:flex-none">
               <input
                 type="text"
+                value={searchQuery}
+                disabled={isOrderingMode}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Search chapter..."
-                className="w-full rounded-2xl border border-border/80 bg-card py-3 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground/70 outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-xs"
+                className="w-full rounded-2xl border border-border/80 bg-card py-3 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground/70 outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/10 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 pointer-events-none" />
             </div>
@@ -683,9 +699,11 @@ export function ComicDetailView({
             strategy={verticalListSortingStrategy}
           >
             <div className="flex-1 space-y-3">
-              {chapters.length === 0 ? (
+              {displayChapters.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-border/80 bg-card p-8 text-center text-sm text-muted-foreground shadow-xs">
-                  No chapters available
+                  {chapters.length === 0
+                    ? "No chapters available"
+                    : "No chapters found matching your search"}
                 </div>
               ) : (
                 paginatedChapters.map((chapter) => (
