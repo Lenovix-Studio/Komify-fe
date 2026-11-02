@@ -8,12 +8,15 @@ import {
   Pencil,
   Image as ImageIcon,
   BookOpen,
+  Download,
 } from "lucide-react";
 import { ComicChapter } from "@/types/detailPage";
+import { downloadChapterAsZip } from "@/lib/downloader";
 
 export interface SortableChapterCardProps {
   chapter: ComicChapter;
   comicId: string;
+  comicTitle?: string;
   isOrderingMode: boolean;
   setSelectedChapter: (chapter: ComicChapter | null) => void;
 }
@@ -21,6 +24,7 @@ export interface SortableChapterCardProps {
 export function SortableChapterCard({
   chapter,
   comicId,
+  comicTitle = "Comic",
   isOrderingMode,
   setSelectedChapter,
 }: SortableChapterCardProps) {
@@ -136,6 +140,18 @@ export function SortableChapterCard({
         >
           <ImageIcon className="h-4 w-4 text-muted-foreground transition group-hover/btn:scale-110 group-hover/btn:text-primary" />
           <span>Thumbnail</span>
+        </button>
+
+        <button
+          type="button"
+          title={`Download Chapter ${chapter.chapter_number}`}
+          onClick={() =>
+            downloadChapterAsZip(chapter.id, chapter.chapter_number, comicTitle)
+          }
+          className="group/btn flex h-12 items-center gap-2 overflow-hidden rounded-2xl border border-border/80 bg-background px-3.5 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:bg-accent hover:text-foreground shadow-xs"
+        >
+          <Download className="h-4 w-4 text-muted-foreground transition group-hover/btn:scale-110 group-hover/btn:text-primary" />
+          <span className="hidden sm:inline">Download</span>
         </button>
 
         <Link

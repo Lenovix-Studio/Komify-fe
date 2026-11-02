@@ -42,6 +42,7 @@ import {
   Search,
   Dices,
   Loader2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
@@ -51,6 +52,7 @@ import { MetadataRow } from "@/components/MetadataRow";
 import { SortableChapterCard } from "@/components/SortableChapterCard";
 import { RatingWidget } from "@/components/RatingWidget";
 import { ThumbnailModal } from "@/components/ThumbnailModal";
+import { downloadFullComicAsZip } from "@/lib/downloader";
 
 const statusPremiumStyles: Record<string, string> = {
   Completed: "bg-emerald-500 shadow-emerald-500/20 text-white",
@@ -318,6 +320,17 @@ export function ComicDetailView({
           }
           rightContent={
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Download Comic (Chapters, Cover & Metadata)"
+                onClick={() => downloadFullComicAsZip(comic, chapters)}
+                className="gap-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Download Comic</span>
+              </Button>
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -711,6 +724,7 @@ export function ComicDetailView({
                     key={chapter.id}
                     chapter={chapter}
                     comicId={comic.id}
+                    comicTitle={comic.title}
                     isOrderingMode={isOrderingMode}
                     setSelectedChapter={setSelectedChapter}
                   />
