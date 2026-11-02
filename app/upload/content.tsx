@@ -281,7 +281,7 @@ export default function UploadPageClient({
               const result = JSON.parse(xhr.responseText);
               toast.success("Comic published successfully!", { id: toastId });
               setTimeout(() => {
-                window.location.href = "/";
+                window.location.reload();
               }, 1500);
               resolve(result);
             } catch (e) {

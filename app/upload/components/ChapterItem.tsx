@@ -229,10 +229,19 @@ export const ChapterItem: React.FC<ChapterItemProps> = ({
           ) : (
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3 sm:col-span-2 md:col-span-4">
               {/* Loaded Information */}
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-background text-primary shadow-sm">
-                  <ImageIcon className="h-4 w-4" />
-                </div>
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleOpenPreview(chapter.id, chapter.pages)}
+                  className="relative h-40 w-30 shrink-0 overflow-hidden rounded-xl border border-primary/30 bg-background shadow-sm transition-transform hover:scale-105 active:scale-95"
+                  title="Click to view/manage pages"
+                >
+                  <img
+                    src={chapter.pages[0]}
+                    alt={`Chapter ${chapter.main}.${chapter.sub} first page`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold text-foreground">
                     Pages Loaded Successfully
