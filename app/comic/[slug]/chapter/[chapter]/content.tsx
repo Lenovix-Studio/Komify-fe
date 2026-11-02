@@ -34,6 +34,20 @@ export default function ChapterReaderContent({
     setChapter(initialChapter);
   }, [initialChapter]);
 
+  useEffect(() => {
+    if (initialChapter?.comic?.id && chapterId) {
+      fetch(`${BACKEND_URL}/history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          comic_id: initialChapter.comic.id,
+          chapter_id: chapterId,
+          last_page: 1,
+        }),
+      }).catch((e) => console.error("Failed to record reading history", e));
+    }
+  }, [initialChapter?.comic?.id, chapterId]);
+
   const allChapters = initialAllChapters;
   const [zoom, setZoom] = useState(80);
   const [viewMode, setViewMode] = useState<"original" | "translated">(

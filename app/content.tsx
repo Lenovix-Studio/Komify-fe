@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Upload, Settings } from "lucide-react";
+import { Bookmark, History, Upload, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -168,6 +168,17 @@ export default function Content({ initialData, initialParams }: ContentProps) {
         isRandomLoading={isRandomLoading}
         rightContent={
           <>
+            <Button
+              variant="ghost"
+              asChild
+              className="gap-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Link href="/history">
+                <History className="h-4 w-4 text-muted-foreground/80" />
+                <span className="hidden md:inline">History</span>
+              </Link>
+            </Button>
+
             <Button
               variant="ghost"
               asChild
