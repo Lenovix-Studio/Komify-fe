@@ -12,10 +12,10 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { Loading } from "@/components/loading";
 import { toast } from "sonner";
 import { BACKEND_URL } from "@/lib/constant";
 import { ChapterDetail } from "@/types/chapterPage";
+import { formatChapterNumber } from "@/lib/utils";
 
 export default function ChapterReaderContent({
   slug,
@@ -235,12 +235,13 @@ export default function ChapterReaderContent({
 
             <div className="min-w-0">
               <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
-                {chapter.title || `Chapter ${chapter.chapter_number}`}
+                {chapter.title ||
+                  `Chapter ${formatChapterNumber(chapter.chapter_number)}`}
               </h1>
 
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground/80">
-                  Ch. {chapter.chapter_number}
+                  Ch. {formatChapterNumber(chapter.chapter_number)}
                 </span>
                 <span className="h-1 w-1 rounded-full bg-border" />
                 <span>{chapter.total_pages} Hal</span>

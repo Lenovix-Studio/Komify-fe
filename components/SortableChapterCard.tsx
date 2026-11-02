@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ComicChapter } from "@/types/detailPage";
 import { downloadChapterAsZip } from "@/lib/downloader";
+import { formatChapterNumber } from "@/lib/utils";
 
 export interface SortableChapterCardProps {
   chapter: ComicChapter;
@@ -92,7 +93,7 @@ export function SortableChapterCard({
               CH
             </span>
             <span className="leading-none text-base">
-              {chapter.chapter_number}
+              {formatChapterNumber(chapter.chapter_number)}
             </span>
           </div>
 

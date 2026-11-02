@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  History,
-  Clock3,
-  Search,
-  Trash2,
-  X,
-  BookOpen,
-} from "lucide-react";
+import { History, Clock3, Search, Trash2, X, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +20,7 @@ import { PaginationControl } from "@/components/pagination";
 import { toast } from "sonner";
 import { BACKEND_URL } from "@/lib/constant";
 import { HistoryItem } from "@/types/historyPage";
+import { formatChapterNumber } from "@/lib/utils";
 
 interface HistoryViewProps {
   initialHistories: HistoryItem[];
@@ -221,7 +215,8 @@ export function HistoryView({ initialHistories }: HistoryViewProps) {
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                         {chapter && (
                           <span className="font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
-                            Chapter {chapter.chapter_number}
+                            Chapter{" "}
+                            {formatChapterNumber(chapter.chapter_number)}
                             {chapter.title ? ` - ${chapter.title}` : ""}
                           </span>
                         )}

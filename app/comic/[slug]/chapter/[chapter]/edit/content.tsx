@@ -67,6 +67,16 @@ export default function ChapterEditContent({
     initialChapterData,
   );
 
+  const initialParts = String(initialChapterData?.chapter_number || "1")
+    .trim()
+    .split(/[.,]/);
+  const initialMain = parseInt(initialParts[0], 10) || 1;
+  const initialSub =
+    initialParts[1] !== undefined ? parseInt(initialParts[1], 10) : 0;
+
+  const [chapterMain, setChapterMain] = useState<number>(initialMain);
+  const [chapterSub, setChapterSub] = useState<number>(initialSub);
+
   const [chapterMetadata, setChapterMetadata] = useState({
     title: initialChapterData?.title || "",
     censorship_id:
@@ -118,8 +128,10 @@ export default function ChapterEditContent({
         );
       }
 
+      const formattedChapterNumber = `${chapterMain}.${chapterSub}`;
       const payload = {
         title: chapterMetadata.title,
+        chapter_number: formattedChapterNumber,
         censorship_id: chapterMetadata.censorship_id,
         language_code: chapterMetadata.language_code,
         pages: pages.map((page, index) => ({
@@ -197,12 +209,12 @@ export default function ChapterEditContent({
       prev.map((page) =>
         page.id === pageId
           ? {
-            ...page,
-            file,
-            filename: file.name,
-            url: URL.createObjectURL(file),
-            isReplaced: true,
-          }
+              ...page,
+              file,
+              filename: file.name,
+              url: URL.createObjectURL(file),
+              isReplaced: true,
+            }
           : page,
       ),
     );
@@ -436,6 +448,39 @@ export default function ChapterEditContent({
             </div>
 
             <div className="space-y-5">
+              {/* Chapter Number */}
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  Chapter Number
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2">
+                    <span className="text-xs font-semibold text-zinc-400">
+                      Ch.
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={chapterMain}
+                      onChange={(e) => setChapterMain(Number(e.target.value))}
+                      className="w-16 bg-transparent text-center text-sm font-bold text-indigo-400 outline-none"
+                    />
+                    <span className="font-bold text-zinc-600">.</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={chapterSub}
+                      onChange={(e) => setChapterSub(Number(e.target.value))}
+                      className="w-16 bg-transparent text-center text-sm font-bold text-indigo-400 outline-none"
+                    />
+                  </div>
+                  <span className="text-xs text-zinc-500">
+                    Preview: #{chapterMain}
+                    {chapterSub > 0 ? `,${chapterSub}` : ""}
+                  </span>
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
@@ -689,9 +734,10 @@ const SortablePageCard = React.memo(function SortablePageCard({
       className={`
         group relative overflow-hidden rounded-2xl border bg-zinc-950
         will-change-transform select-none
-        ${isDragging
-          ? "z-50 border-indigo-500 ring-2 ring-indigo-500/30"
-          : "border-zinc-800 hover:border-indigo-500/40"
+        ${
+          isDragging
+            ? "z-50 border-indigo-500 ring-2 ring-indigo-500/30"
+            : "border-zinc-800 hover:border-indigo-500/40"
         }
       `}
     >
@@ -741,9 +787,10 @@ const SortablePageCard = React.memo(function SortablePageCard({
       {/* Overlay */}
       <div
         className={`absolute inset-0 flex items-end justify-between gap-2 p-3 transition-opacity duration-150
-          ${isDragging
-            ? "bg-black/20 opacity-100"
-            : "bg-black/40 opacity-0 group-hover:opacity-100"
+          ${
+            isDragging
+              ? "bg-black/20 opacity-100"
+              : "bg-black/40 opacity-0 group-hover:opacity-100"
           }
         `}
       >
