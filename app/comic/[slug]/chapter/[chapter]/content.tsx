@@ -144,35 +144,57 @@ export default function ChapterReaderContent({
     const pageElements = Array.from(
       document.querySelectorAll<HTMLElement>("[data-page-id]"),
     );
+
+    const viewportCenter = window.innerHeight / 2;
     let targetEl: HTMLElement | null = null;
-    let minDiff = Infinity;
+    let minDistance = Infinity;
 
     for (const el of pageElements) {
       const rect = el.getBoundingClientRect();
-      const diff = Math.abs(rect.top);
-      if (diff < minDiff) {
-        minDiff = diff;
-        targetEl = el;
+      if (rect.bottom > 0 && rect.top < window.innerHeight) {
+        const elCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(elCenter - viewportCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          targetEl = el;
+        }
       }
     }
 
-    const targetId = targetEl?.getAttribute("data-page-id");
-    const initialOffset = targetEl ? targetEl.getBoundingClientRect().top : 0;
+    if (!targetEl && pageElements.length > 0) {
+      targetEl = pageElements[0];
+    }
+
+    if (!targetEl) {
+      setZoom(newZoom);
+      return;
+    }
+
+    const targetId = targetEl.getAttribute("data-page-id");
+    const rectBefore = targetEl.getBoundingClientRect();
+
+    const progressInPage =
+      rectBefore.height > 0
+        ? (viewportCenter - rectBefore.top) / rectBefore.height
+        : 0;
 
     setZoom(newZoom);
 
-    if (targetId) {
-      setTimeout(() => {
-        const el = document.querySelector(`[data-page-id="${targetId}"]`);
-        if (el) {
-          const newRect = el.getBoundingClientRect();
-          window.scrollBy({
-            top: newRect.top - initialOffset,
-            behavior: "instant" as ScrollBehavior,
-          });
-        }
-      }, 50);
-    }
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(
+        `[data-page-id="${targetId}"]`,
+      );
+      if (el) {
+        const rectAfter = el.getBoundingClientRect();
+        const currentCenterOffset =
+          rectAfter.top + rectAfter.height * progressInPage;
+        const diff = currentCenterOffset - viewportCenter;
+        window.scrollBy({
+          top: diff,
+          behavior: "instant" as ScrollBehavior,
+        });
+      }
+    });
   };
 
   useEffect(() => {
@@ -263,9 +285,7 @@ export default function ChapterReaderContent({
       </header>
 
       <main className="mx-auto flex max-w-5xl flex-col items-center px-4 py-6">
-        <div
-          className={`w-full ${getZoomClass()} mx-auto space-y-4 transition-all duration-300`}
-        >
+        <div className={`w-full ${getZoomClass()} mx-auto space-y-4`}>
           {chapter.pages.map((page) => (
             <div
               key={page.id}
