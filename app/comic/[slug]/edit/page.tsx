@@ -12,12 +12,16 @@ export default async function EditComicPage({
 }) {
   const { slug } = await params;
   let comicData = null;
+  let chaptersData: any[] = [];
   let statuses: OptionItem[] = [];
   let templates: OptionItem[] = [];
 
   try {
-    const [comicRes, typesRes, ccRes] = await Promise.all([
+    const [comicRes, chaptersRes, typesRes, ccRes] = await Promise.all([
       fetch(`${BACKEND_URL}/comics/${slug}/metadata`, {
+        cache: "no-store",
+      }),
+      fetch(`${BACKEND_URL}/comics/${slug}/chapters`, {
         cache: "no-store",
       }),
       fetch(`${BACKEND_URL}/common-code/types`, { cache: "no-store" }),
@@ -26,6 +30,11 @@ export default async function EditComicPage({
 
     if (!comicRes.ok) return notFound();
     comicData = await comicRes.json();
+
+    if (chaptersRes.ok) {
+      const chJson = await chaptersRes.json();
+      chaptersData = chJson.data || [];
+    }
 
     if (ccRes.ok && typesRes.ok) {
       const types = await typesRes.json();
@@ -63,6 +72,7 @@ export default async function EditComicPage({
     <EditComicClient
       slug={slug}
       initialComic={comicData}
+      initialChapters={chaptersData}
       statuses={statuses}
       templates={templates}
     />

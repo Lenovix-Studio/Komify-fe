@@ -90,8 +90,16 @@ export function ComicDetailView({
 }: ComicDetailViewProps) {
   const router = useRouter();
 
-  const [comic] = useState<ComicMetadata>(initialComic);
+  const [comic, setComic] = useState<ComicMetadata>(initialComic);
   const [chapters, setChapters] = useState<ComicChapter[]>(initialChapters);
+
+  useEffect(() => {
+    setComic(initialComic);
+  }, [initialComic]);
+
+  useEffect(() => {
+    setChapters(initialChapters);
+  }, [initialChapters]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"latest" | "az">("latest");
@@ -397,7 +405,7 @@ export function ComicDetailView({
                   >
                     {comic.cover_path ? (
                       <img
-                        src={`${BACKEND_URL}${comic.cover_path}`}
+                        src={`${BACKEND_URL}${comic.cover_path}?t=${Date.now()}`}
                         alt={comic.title}
                         loading="eager"
                         className="w-full h-auto object-contain max-h-[600px]"

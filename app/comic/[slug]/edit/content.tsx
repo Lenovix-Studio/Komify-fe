@@ -10,6 +10,7 @@ import {
   ImageIcon,
   BookOpen,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import { getCroppedImg } from "@/lib/cropImage";
 import { useRouter } from "next/navigation";
@@ -18,15 +19,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { OptionItem } from "@/types/uploadPage";
 import { BACKEND_URL } from "@/lib/constant";
+import { SelectChapterCoverModal } from "./SelectChapterCoverModal";
 
 export default function EditComicClient({
   slug,
   initialComic,
+  initialChapters = [],
   statuses,
   templates,
 }: {
   slug: string;
   initialComic: any;
+  initialChapters?: any[];
   statuses: OptionItem[];
   templates: OptionItem[];
 }) {
@@ -78,6 +82,7 @@ export default function EditComicClient({
   const [savedCrop, setSavedCrop] = useState({ x: 0, y: 0 });
   const [savedRotation, setSavedRotation] = useState(0);
   const [savedZoom, setSavedZoom] = useState(1);
+  const [showChapterModal, setShowChapterModal] = useState(false);
   const [fixModal, setFixModal] = useState<{
     open: boolean;
     field: string;
@@ -135,6 +140,35 @@ export default function EditComicClient({
         setZoom(1);
       });
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSelectChapterPage = async (pageUrl: string) => {
+    try {
+      const toastId = toast.loading("Memuat gambar dari chapter...");
+      const res = await fetch(pageUrl);
+      if (!res.ok) throw new Error("Gagal mengambil gambar halaman");
+      const blob = await res.blob();
+      const ext = pageUrl.split(".").pop()?.split("?")[0] || "jpg";
+      const file = new File([blob], `cover_from_chapter.${ext}`, {
+        type: blob.type || "image/jpeg",
+      });
+      setCoverFile(file);
+
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        const resultStr = reader.result as string;
+        setImageSrc(resultStr);
+        setOriginalSrc(resultStr);
+        setCrop({ x: 0, y: 0 });
+        setRotation(0);
+        setZoom(1);
+        toast.dismiss(toastId);
+      });
+      reader.readAsDataURL(blob);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Gagal memproses gambar chapter");
     }
   };
 
@@ -230,6 +264,7 @@ export default function EditComicClient({
       }
 
       toast.success("Comic updated successfully");
+      router.refresh();
       router.push(`/comic/${slug}`);
     } catch (error) {
       console.error(error);
@@ -374,27 +409,39 @@ export default function EditComicClient({
             </div>
 
             {/* Action Buttons */}
-            {coverImage && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() =>
                     document.getElementById("cover-upload")?.click()
                   }
-                  className="rounded-xl border border-input bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-input bg-background py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
                 >
-                  Replace
+                  <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Upload File</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setCoverImage(null)}
-                  className="rounded-xl border border-destructive/20 bg-destructive/10 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                  onClick={() => setShowChapterModal(true)}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
                 >
-                  Remove
+                  <Layers className="h-3.5 w-3.5" />
+                  <span>From Chapter</span>
                 </button>
               </div>
-            )}
+
+              {coverImage && (
+                <button
+                  type="button"
+                  onClick={() => setCoverImage(null)}
+                  className="w-full rounded-xl border border-destructive/20 bg-destructive/10 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                >
+                  Remove Cover
+                </button>
+              )}
+            </div>
 
             {/* Publication Status Selector */}
             <div className="mt-5 space-y-1.5 border-t border-border/60 pt-4">
@@ -668,6 +715,14 @@ export default function EditComicClient({
         onCropComplete={onCropComplete}
         saveCroppedImage={saveCroppedImage}
         skipCrop={skipCrop}
+      />
+
+      {/* ================= SELECT CHAPTER COVER MODAL ================= */}
+      <SelectChapterCoverModal
+        isOpen={showChapterModal}
+        onClose={() => setShowChapterModal(false)}
+        chapters={initialChapters}
+        onSelectPage={handleSelectChapterPage}
       />
     </>
   );
